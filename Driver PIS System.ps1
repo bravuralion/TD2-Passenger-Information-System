@@ -247,8 +247,7 @@ $announceExit = {
             }
         }
 
-        $finalAnnouncement = "$baseAnnouncement$exitAnnouncement$additionalAnnouncement"
-        
+        $finalAnnouncement = "$baseAnnouncement$exitAnnouncement$additionalAnnouncement"        
         if ($isLastStation) {
             if ($selectedLanguage -eq 'Deutsch') {
                 $finalAnnouncement += ", Dieser Zug endet hier. Bitte alle aussteigen."
