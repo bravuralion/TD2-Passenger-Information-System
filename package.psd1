@@ -6,10 +6,10 @@
         Obfuscate = $true
         HideConsoleWindow = $true
         DotNetVersion = 'v4.6.2'
-        FileVersion = '0.0.1'
+        FileVersion = '0.3.1mt'
         FileDescription = ''
-        ProductName = 'TD2 Driver PIS System'
-        ProductVersion = '0.0.1'
+        ProductName = 'TD2 Driver PIS System (translated)'
+        ProductVersion = '0.3.1mt'
         Copyright = 'Bravura Lion, Argeos'
         RequireElevation = $false
         ApplicationIconPath = ''
