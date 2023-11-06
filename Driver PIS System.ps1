@@ -1,7 +1,7 @@
 ﻿Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
-$currentVersion = '0.2'
+$currentVersion = '0.3'
 
 #File Location für Audio Announcement
 $filename = "$env:APPDATA\TD2-AN.wav"
@@ -134,7 +134,7 @@ function ConvertTextToSpeech {
 
 $form = New-Object System.Windows.Forms.Form
 $form.Text = 'Driver PIS System'
-$form.Size = New-Object System.Drawing.Size(500, 400)
+$form.Size = New-Object System.Drawing.Size(500, 430)
 
 $trainNumberTextbox = New-Object System.Windows.Forms.TextBox
 $trainNumberTextbox.Location = New-Object System.Drawing.Point(10, 10)
@@ -186,13 +186,14 @@ $gongButton.Text = 'Select Gong Sound'
 $gongButton.Add_Click($gongButton_Click)
 $form.Controls.Add($gongButton)
 
-$playGong = {
-    if ($script:gongSoundPath) {
-        $player = New-Object System.Media.SoundPlayer
-        $player.SoundLocation = $script:gongSoundPath
-        $player.PlaySync()
-    }
-}
+$languageComboBox = New-Object System.Windows.Forms.ComboBox
+$languageComboBox.Location = New-Object System.Drawing.Point(10,330)
+$languageComboBox.Size = New-Object System.Drawing.Size(460, 20)
+$languageComboBox.DropDownStyle = [System.Windows.Forms.ComboBoxStyle]::DropDownList
+$languageComboBox.Items.Add("Deutsch")
+$languageComboBox.Items.Add("English")
+$languageComboBox.SelectedItem = "Deutsch"
+$form.Controls.Add($languageComboBox)
 
 $loadScheduleButton.Add_Click({
     $trainsResponse = Invoke-RestMethod -Uri "https://stacjownik.spythere.pl/api/getActiveTrainList"
@@ -208,39 +209,65 @@ $loadScheduleButton.Add_Click({
 
 $announceExit = {
     param([string]$exitSide)
+    
+    $selectedLanguage = $languageComboBox.SelectedItem.ToString()
+    $languageCode = if ($selectedLanguage -eq 'Deutsch') { 'german' } else { 'english' }
+
     if ($stationsListbox.SelectedItem) {
         $currentIndex = $stationsListbox.SelectedIndex
         $isLastStation = $currentIndex -eq $stationsListbox.Items.Count - 1
-
-        # Removes PO
         $stationName = $stationsListbox.SelectedItem -replace 'po\.$', ''
 
-        $baseAnnouncement = if ($isLastStation) {
-            "Endstation: $($stationName)"
-        } else {
-            "Nächster Halt: $($stationName)"
+        $baseAnnouncement = ""
+        $exitAnnouncement = ""
+        $additionalAnnouncement = ""
+        
+        switch ($selectedLanguage) {
+            'Deutsch' {
+                $baseAnnouncement = "Nächster Halt: $($stationName)"
+                if ($exitSide -eq "links") { $exitAnnouncement = ", Ausstieg in Fahrtrichtung Links" }
+                if ($exitSide -eq "rechts") { $exitAnnouncement = ", Ausstieg in Fahrtrichtung Rechts" }
+                if (-not $isLastStation) {
+                    $random = Get-Random -Minimum 1 -Maximum 6
+                    if ($random -le 2) {
+                        $additionalAnnouncement = ". Für Ihre Anschlüsse beachten Sie bitte die Lautsprecherdurchsagen und weitere Informationen am Bahnsteig"
+                    }
+                }
+            }
+            'English' {
+                $baseAnnouncement = "Next stop: $($stationName)"
+                if ($exitSide -eq "links") { $exitAnnouncement = ", Exit on the left" }
+                if ($exitSide -eq "rechts") { $exitAnnouncement = ", Exit on the right" }
+                if (-not $isLastStation) {
+                    $random = Get-Random -Minimum 1 -Maximum 6
+                    if ($random -le 2) {
+                        $additionalAnnouncement = ". For your connections, please pay attention to the announcements and further information on the platform"
+                    }
+                }
+            }
         }
 
-        $sideAnnouncement = if ($exitSide -eq "none") {
-            ""
-        } else {
-            ", Ausstieg in Fahrtrichtung $exitSide"
+        $finalAnnouncement = "$baseAnnouncement$exitAnnouncement$additionalAnnouncement"
+        
+        if ($isLastStation) {
+            if ($selectedLanguage -eq 'Deutsch') {
+                $finalAnnouncement += ", Dieser Zug endet hier. Bitte alle aussteigen."
+            } elseif ($selectedLanguage -eq 'English') {
+                $finalAnnouncement += ", This train terminates here. All passengers must disembark."
+            }
         }
 
-        $finalAnnouncement = "$baseAnnouncement$sideAnnouncement"
+        ConvertTextToSpeech -text $finalAnnouncement -language $languageCode
 
-        if ($isLastStation -and [string]::IsNullOrEmpty($exitSide)) {
-            $finalAnnouncement += ", bitte alle aussteigen."
-        }
-        ConvertTextToSpeech -text $finalAnnouncement -language "German"
-        #[System.Windows.Forms.MessageBox]::Show($finalAnnouncement)
-
-        # Select the next item in the list unless it's the last one
         if (-not $isLastStation) {
             $stationsListbox.SelectedIndex = $currentIndex + 1
-        } 
+        }
     }
 }
+
+
+
+
 $exitRightButton.Add_Click({ $announceExit.Invoke('rechts') })
 $exitLeftButton.Add_Click({ $announceExit.Invoke('links') })
 $exitNoneButton.Add_Click({ $announceExit.Invoke('none') })
