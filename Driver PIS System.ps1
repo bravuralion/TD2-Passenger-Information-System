@@ -1,7 +1,7 @@
 ﻿Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
-$currentVersion = '0.3'
+$currentVersion = '0.3.1mt'
 
 #File Location für Audio Announcement
 $filename = "$env:APPDATA\TD2-AN.wav"
@@ -12,7 +12,7 @@ $apiKey = ""
 $ttsUrl = "https://$resourceRegion.tts.speech.microsoft.com/cognitiveservices/v1"
 
 function Check-For-Update {
-    $user = 'bravuralion'
+    $user = 'matpl11'
     $repo = 'TD2-Driver-PIS-SYSTEM'
     $apiUrl = "https://api.github.com/repos/$user/$repo/releases/latest"
 
@@ -192,6 +192,7 @@ $languageComboBox.Size = New-Object System.Drawing.Size(460, 20)
 $languageComboBox.DropDownStyle = [System.Windows.Forms.ComboBoxStyle]::DropDownList
 $languageComboBox.Items.Add("Deutsch")
 $languageComboBox.Items.Add("English")
+$languageComboBox.Items.Add("Polish")
 $languageComboBox.SelectedItem = "Deutsch"
 $form.Controls.Add($languageComboBox)
 
@@ -211,7 +212,7 @@ $announceExit = {
     param([string]$exitSide)
     
     $selectedLanguage = $languageComboBox.SelectedItem.ToString()
-    $languageCode = if ($selectedLanguage -eq 'Deutsch') { 'german' } else { 'english' }
+    $languageCode = if ($selectedLanguage -eq 'Deutsch') { 'german' } else { $selectedLanguage }
 
     if ($stationsListbox.SelectedItem) {
         $currentIndex = $stationsListbox.SelectedIndex
@@ -245,6 +246,17 @@ $announceExit = {
                     }
                 }
             }
+            'Polish' {
+                $baseAnnouncement = "Następna stacja: $($stationName)"
+                if ($exitSide -eq "links") { $exitAnnouncement = ", odjeżdża z lewej" }
+                if ($exitSide -eq "rechts") { $exitAnnouncement = ", odjeżdża z prawej" }
+                if (-not $isLastStation) {
+                    $random = Get-Random -Minimum 1 -Maximum 6
+                    if ($random -le 2) {
+                        $additionalAnnouncement = ". Podczas przesiadek prosimy zwracać szczególną uwagę na komunikaty stacyjne "
+                    }
+                }
+            }
         }
 
         $finalAnnouncement = "$baseAnnouncement$exitAnnouncement$additionalAnnouncement"        
@@ -253,6 +265,8 @@ $announceExit = {
                 $finalAnnouncement += ", Dieser Zug endet hier. Bitte alle aussteigen."
             } elseif ($selectedLanguage -eq 'English') {
                 $finalAnnouncement += ", This train terminates here. All passengers must disembark."
+            } elseif ($selectedLanguage -eq 'English') {
+                $finalAnnouncement += ", Pociąg kończy bieg."
             }
         }
 

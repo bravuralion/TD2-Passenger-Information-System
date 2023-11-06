@@ -1,6 +1,6 @@
 @{
-    Root = 'C:\Users\bravura\Documents\GitHub\TD2-Driver-PIS-SYSTEM\Driver PIS System.ps1'
-    OutputPath = 'C:\Users\bravura\Documents\GitHub\TD2-Driver-PIS-SYSTEM\out'
+    Root = 'C:\Users\Mateusz\TD2-Driver-PIS-SYSTEM\Driver PIS System.ps1'
+    OutputPath = 'C:\Users\Mateusz\TD2-Driver-PIS-SYSTEM\out'
     Package = @{
         Enabled = $true
         Obfuscate = $true
@@ -10,7 +10,7 @@
         FileDescription = ''
         ProductName = 'TD2 Driver PIS System'
         ProductVersion = '0.0.1'
-        Copyright = 'Bravura Lion'
+        Copyright = 'Bravura Lion, Argeos'
         RequireElevation = $false
         ApplicationIconPath = ''
         PackageType = 'Console'
