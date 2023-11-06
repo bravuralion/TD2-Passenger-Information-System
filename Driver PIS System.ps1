@@ -1,7 +1,7 @@
 ﻿Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
-$currentVersion = '0.3.1mt'
+$currentVersion = '0.3.1'
 
 #File Location für Audio Announcement
 $filename = "$env:APPDATA\TD2-AN.wav"
