@@ -13,7 +13,7 @@ Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
 $currentVersion = '0.5'
-$configFilePath = ".\lang.cfg"
+$configFilePath = ".\config.cfg"
 #File Location für Audio Announcement
 $filename = "$env:APPDATA\TD2-AN.wav"
 #Settings for Azure Voice
