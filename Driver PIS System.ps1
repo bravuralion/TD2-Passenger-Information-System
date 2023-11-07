@@ -12,7 +12,7 @@ Notes:			Alpha Version, Source does not include Azure Voice API Key which is req
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
-$currentVersion = '0.5'
+$currentVersion = '0.6'
 $configFilePath = ".\config.cfg"
 $categories_config = ".\categories.cfg"
 #File Location für Audio Announcement
@@ -220,6 +220,42 @@ $gongButton.Size = New-Object System.Drawing.Size(460, 20)
 $gongButton.Text = 'Select Gong (.WAV)'
 $gongButton.Add_Click($gongButton_Click)
 $form.Controls.Add($gongButton)
+
+# Spezialankündigungen Buttons
+$specialButton1 = New-Object System.Windows.Forms.Button
+$specialButton1.Location = New-Object System.Drawing.Point(10, 360)
+$specialButton1.Size = New-Object System.Drawing.Size(75, 23)
+$specialButton1.Text = 'S1'
+$specialButton1.Add_Click({ ConvertTextToSpeech -text $Special1 -language $languageComboBox.SelectedItem.ToString() })
+$form.Controls.Add($specialButton1)
+
+$specialButton2 = New-Object System.Windows.Forms.Button
+$specialButton2.Location = New-Object System.Drawing.Point(95, 360)
+$specialButton2.Size = New-Object System.Drawing.Size(75, 23)
+$specialButton2.Text = 'S2'
+$specialButton2.Add_Click({ ConvertTextToSpeech -text $Special2 -language $languageComboBox.SelectedItem.ToString() })
+$form.Controls.Add($specialButton2)
+
+$specialButton3 = New-Object System.Windows.Forms.Button
+$specialButton3.Location = New-Object System.Drawing.Point(180, 360)
+$specialButton3.Size = New-Object System.Drawing.Size(75, 23)
+$specialButton3.Text = 'S3'
+$specialButton3.Add_Click({ ConvertTextToSpeech -text $Special3 -language $languageComboBox.SelectedItem.ToString() })
+$form.Controls.Add($specialButton3)
+
+$specialButton4 = New-Object System.Windows.Forms.Button
+$specialButton4.Location = New-Object System.Drawing.Point(265, 360)
+$specialButton4.Size = New-Object System.Drawing.Size(75, 23)
+$specialButton4.Text = 'S4'
+$specialButton4.Add_Click({ ConvertTextToSpeech -text $Special4 -language $languageComboBox.SelectedItem.ToString() })
+$form.Controls.Add($specialButton4)
+
+$specialButton5 = New-Object System.Windows.Forms.Button
+$specialButton5.Location = New-Object System.Drawing.Point(350, 360)
+$specialButton5.Size = New-Object System.Drawing.Size(75, 23)
+$specialButton5.Text = 'S5'
+$specialButton5.Add_Click({ ConvertTextToSpeech -text $Special5 -language $languageComboBox.SelectedItem.ToString() })
+$form.Controls.Add($specialButton5)
 
 $languageComboBox = New-Object System.Windows.Forms.ComboBox
 $languageComboBox.Location = New-Object System.Drawing.Point(10,330)
