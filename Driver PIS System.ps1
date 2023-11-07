@@ -8,7 +8,7 @@ $filename = "$env:APPDATA\TD2-AN.wav"
 
 #Settings for Azure Voice
 $resourceRegion = "westeurope"
-$apiKey = ""
+$apiKey = "1234"
 $ttsUrl = "https://$resourceRegion.tts.speech.microsoft.com/cognitiveservices/v1"
 
 function Check-For-Update {
