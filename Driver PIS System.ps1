@@ -14,12 +14,19 @@ Add-Type -AssemblyName System.Drawing
 
 $currentVersion = '0.5'
 $configFilePath = ".\config.cfg"
+$categories_config = ".\categories.cfg"
 #File Location für Audio Announcement
 $filename = "$env:APPDATA\TD2-AN.wav"
 #Settings for Azure Voice
 $resourceRegion = "westeurope"
 $apiKey = ""
 $ttsUrl = "https://$resourceRegion.tts.speech.microsoft.com/cognitiveservices/v1"
+
+$categoriesNames = @{}
+Get-Content $categories_config -Encoding UTF8 | ForEach-Object {
+    $pair = $_ -split ' = ', 2
+    $categoriesNames[$pair[0].Trim()] = $pair[1].Trim()
+}
 
 if (-not (Test-Path $configFilePath)) {
     Add-Type -AssemblyName System.Windows.Forms
@@ -228,8 +235,12 @@ $loadScheduleButton.Add_Click({
     $trainsResponse = Invoke-RestMethod -Uri "https://stacjownik.spythere.pl/api/getActiveTrainList"
     $selectedTrainNo = $trainNumberTextbox.Text
     $selectedTrain = $trainsResponse | Where-Object { $_.trainNo -eq $selectedTrainNo }
+    $category = $categoriesNames[$selectedTrain.timetable.category]
     $stationsListbox.Items.Clear()
-    foreach ($stop in $selectedTrain.timetable.stopList) {
+    if ($selectedTrain.timetable.stopList.Count -gt 0) {
+        $stationsListbox.Items.Add($selectedTrain.timetable.stopList[0].stopNameRAW)
+    }
+    foreach ($stop in $selectedTrain.timetable.stopList[1..($selectedTrain.timetable.stopList.Count - 1)]) {
         if ($stop.stopType -eq 'PH' -or $stop -eq $selectedTrain.timetable.stopList[-1]) {
             $stationsListbox.Items.Add($stop.stopNameRAW)
         }
@@ -238,20 +249,33 @@ $loadScheduleButton.Add_Click({
 
 $announceExit = {
     param([string]$exitSide)
-    
+    write-host $stationsListbox.SelectedItem
+    write-host $isLastStation
+
     $selectedLanguage = $languageComboBox.SelectedItem.ToString()
+    $trainsResponse = Invoke-RestMethod -Uri "https://stacjownik.spythere.pl/api/getActiveTrainList"
+    $selectedTrainNo = $trainNumberTextbox.Text
+    $selectedTrain = $trainsResponse | Where-Object { $_.trainNo -eq $selectedTrainNo }
+    $category = $categoriesNames[$selectedTrain.timetable.category]
+    $lastStation = $stationsListbox.Items[$stationsListbox.Items.Count - 1] -replace 'po\.$', ''
 
     if ($stationsListbox.SelectedItem) {
         $currentIndex = $stationsListbox.SelectedIndex
+        $isFirstStation = $currentIndex -eq 0
         $isLastStation = $currentIndex -eq $stationsListbox.Items.Count - 1
         $stationName = $stationsListbox.SelectedItem -replace 'po\.$', ''
-        
+
         switch ($selectedLanguage) {
             'German' {
-                $baseAnnouncement = "$next_station_DE $($stationName)"
-                if ($exitSide -eq "left") { $exitAnnouncement = $exit_left_DE }
-                if ($exitSide -eq "right") { $exitAnnouncement = $exit_right_DE }
-                if (-not $isLastStation) {
+                if ($isFirstStation) {
+                    $baseAnnouncement = "$Start_Station__01_DE$category$Start_Station__02_DE$lastStation$Start_Station__03_DE" 
+                } else {
+                    $baseAnnouncement = "$next_station_DE $($stationName)"
+                }
+                if ($exitSide -eq "left"-and -not $isFirstStation) { $exitAnnouncement = $exit_left_DE }
+                if ($exitSide -eq "right"-and -not $isFirstStation) { $exitAnnouncement = $exit_right_DE }
+
+                if (-not $isLastStation -and -not $isFirstStation) {
                     $random = Get-Random -Minimum 1 -Maximum 6
                     if ($random -le 2) {
                         $additionalAnnouncement = $additional_Announcement_DE
@@ -259,10 +283,15 @@ $announceExit = {
                 }
             }
             'English' {
-                $baseAnnouncement = "$next_station_EN $($stationName)"
-                if ($exitSide -eq "left") { $exitAnnouncement = $exit_left_EN }
-                if ($exitSide -eq "right") { $exitAnnouncement = $exit_right_EN }
-                if (-not $isLastStation) {
+                if ($isFirstStation) {
+                    $baseAnnouncement = "$Start_Station__01_EN$category$Start_Station__02_EN$lastStation$Start_Station__03_EN" 
+                } else {
+                    $baseAnnouncement = "$next_station_EN $($stationName)"
+                }
+                if ($exitSide -eq "left"-and -not $isFirstStation) { $exitAnnouncement = $exit_left_EN }
+                if ($exitSide -eq "right"-and -not $isFirstStation) { $exitAnnouncement = $exit_right_EN }
+
+                if (-not $isLastStation -and -not $isFirstStation) {
                     $random = Get-Random -Minimum 1 -Maximum 6
                     if ($random -le 2) {
                         $additionalAnnouncement = $additional_Announcement_EN
@@ -270,10 +299,15 @@ $announceExit = {
                 }
             }
             'Polish' {
-                $baseAnnouncement = "$next_station_PL $($stationName)"
-                if ($exitSide -eq "left") { $exitAnnouncement = $exit_left_PL }
-                if ($exitSide -eq "right") { $exitAnnouncement = $exit_right_PL }
-                if (-not $isLastStation) {
+                if ($isFirstStation) {
+                    $baseAnnouncement = "$Start_Station__01_PL$category$Start_Station__02_PL$lastStation$Start_Station__03_PL" 
+                } else {
+                    $baseAnnouncement = "$next_station_PL $($stationName)"
+                }
+                if ($exitSide -eq "left"-and -not $isFirstStation) { $exitAnnouncement = $exit_left_PL }
+                if ($exitSide -eq "right"-and -not $isFirstStation) { $exitAnnouncement = $exit_right_PL }
+
+                if (-not $isLastStation -and -not $isFirstStation) {
                     $random = Get-Random -Minimum 1 -Maximum 6
                     if ($random -le 2) {
                         $additionalAnnouncement = $additional_Announcement_PL
