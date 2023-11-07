@@ -12,7 +12,7 @@ Notes:			Alpha Version, Source does not include Azure Voice API Key which is req
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
-$currentVersion = '0.6'
+$currentVersion = '0.7'
 $configFilePath = ".\config.cfg"
 $categories_config = ".\categories.cfg"
 #File Location für Audio Announcement
@@ -277,7 +277,7 @@ $loadScheduleButton.Add_Click({
         $stationsListbox.Items.Add($selectedTrain.timetable.stopList[0].stopNameRAW)
     }
     foreach ($stop in $selectedTrain.timetable.stopList[1..($selectedTrain.timetable.stopList.Count - 1)]) {
-        if ($stop.stopType -eq 'PH' -or $stop -eq $selectedTrain.timetable.stopList[-1]) {
+        if ($stop.stopType -like '*PH*' -or $stop -eq $selectedTrain.timetable.stopList[-1]) {
             $stationsListbox.Items.Add($stop.stopNameRAW)
         }
     }
