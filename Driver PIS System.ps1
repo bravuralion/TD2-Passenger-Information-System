@@ -12,13 +12,13 @@ Notes:			Alpha Version, Source does not include Azure Voice API Key which is req
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
-$currentVersion = '0.3'
+$currentVersion = '0.5'
 $configFilePath = ".\lang.cfg"
 #File Location für Audio Announcement
 $filename = "$env:APPDATA\TD2-AN.wav"
 #Settings for Azure Voice
 $resourceRegion = "westeurope"
-$apiKey = "123"
+$apiKey = ""
 $ttsUrl = "https://$resourceRegion.tts.speech.microsoft.com/cognitiveservices/v1"
 
 if (-not (Test-Path $configFilePath)) {
@@ -307,13 +307,13 @@ $exitNoneButton.Add_Click({ $announceExit.Invoke('none') })
 $form.KeyPreview = $true
 $form.Add_KeyDown({
     switch ($_.KeyCode) {
-        'F13' {
-            $announceExit.Invoke('right')
-        }
-        'F14' {
+        $Hotkey_Left {
             $announceExit.Invoke('left')
         }
-        'F15' {
+        $Hotkey_Right {
+            $announceExit.Invoke('right')
+        }
+        $Hotkey_None {
             $announceExit.Invoke('none')
         }
     }
