@@ -17,7 +17,7 @@ def load_schedule():
         response.raise_for_status()
         trains_response = response.json()
         
-        selected_train_no = int(train_number_textbox.get())  # Wandeln Sie den String in eine Ganzzahl um
+        selected_train_no = int(train_number_textbox.get())
         selected_train = next((train for train in trains_response if train['trainNo'] == selected_train_no), None)
 
         if not selected_train:
@@ -26,7 +26,7 @@ def load_schedule():
         stations_listbox.delete(0, tk.END)
         stations_listbox.insert(tk.END, selected_train['timetable']['stopList'][0]['stopNameRAW'])
 
-        for stop in selected_train['timetable']['stopList'][1:-1]:  # Letzten Halt ausschließen für diesen Loop
+        for stop in selected_train['timetable']['stopList'][1:-1]:
             if 'ph' in stop['stopType'].lower():
                 stations_listbox.insert(tk.END, stop['stopNameRAW'])
 
