@@ -16,7 +16,6 @@ import keyboard
 import configparser
 from os import getenv
 
-
 api_key = ''
 resource_region = 'westeurope'
 tts_url = f'https://{resource_region}.tts.speech.microsoft.com/cognitiveservices/v1'
@@ -27,9 +26,11 @@ categories_config_path = 'config/categories.cfg'
 categories_names = {}
 wav_output_path = f"{getenv('APPDATA')}\\TD2-AN.wav"
 gong_sound_path = None
+pygame.mixer.init()
 temp_dir = tempfile.mkdtemp()
 
-current_version = '1.1'
+
+current_version = '1.2'
 user = 'bravuralion'
 repo = 'TD2-Driver-PIS-SYSTEM'
 api_url = f"https://api.github.com/repos/{user}/{repo}/releases/latest"
@@ -271,9 +272,13 @@ def convert_text_to_speech(text, language):
     else:
         messagebox.showerror("Error", f"Error with the text-to-speech service: {response.status_code}\n{text}")
 
+def adjust_volume(value):
+    new_volume = float(value) / 100
+    pygame.mixer.music.set_volume(new_volume)
+
 root = tk.Tk()
 root.title('On-board Passenger Information System')
-root.geometry('480x400')
+root.geometry('480x430')
 
 train_number_textbox = tk.Entry(root)
 train_number_textbox.place(x=10, y=10, width=460, height=20)
@@ -306,6 +311,13 @@ for i in range(1, 6):
     special_button.place(x=10 + 85 * (i-1), y=360, width=75, height=23)
     special_buttons.append(special_button)
 
+volume_label = tk.Label(root, text='Volume:')
+volume_label.place(x=10, y=410) 
+
+volume_control = tk.Scale(root, from_=0, to=100, orient='horizontal', command=adjust_volume)
+volume_control.set(50) 
+volume_control.place(x=60, y=390, width=140, height=50)
+
 language_combobox = tk.StringVar(root)
 language_combobox.set('DE')  # default value
 language_options = ['DE', 'EN', 'PL']
@@ -315,4 +327,3 @@ language_dropdown.place(x=10, y=330, width=460, height=20)
 
 root.protocol("WM_DELETE_WINDOW", on_closing)
 root.mainloop()
-keyboard.unhook_all_hotkeys()
