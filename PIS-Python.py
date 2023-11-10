@@ -29,7 +29,7 @@ wav_output_path = f"{getenv('APPDATA')}\\TD2-AN.wav"
 gong_sound_path = None
 temp_dir = tempfile.mkdtemp()
 
-current_version = '1.0'
+current_version = '1.1'
 user = 'bravuralion'
 repo = 'TD2-Driver-PIS-SYSTEM'
 api_url = f"https://api.github.com/repos/{user}/{repo}/releases/latest"
@@ -194,6 +194,7 @@ def announce_exit(exit_side):
         is_first_station = current_index == 0
         is_last_station = current_index == len(stations_listbox.get(0, tk.END)) - 1
         station_name = stations_listbox.get(current_index).rstrip(' po.')
+        last_station_name = stations_listbox.get(tk.END).rstrip(' po.')
 
         base_announcement = ""
         exit_announcement = ""
@@ -204,7 +205,7 @@ def announce_exit(exit_side):
             base_announcement = config['Start_Station'][f'01_{language_key}'] + " " + \
                                 category_name + " " + \
                                 config['Start_Station'][f'02_{language_key}'] + " " + \
-                                station_name + \
+                                last_station_name + \
                                 config['Start_Station'][f'03_{language_key}']
         else:
             base_announcement = config['next_station'][language_key] + " " + station_name
