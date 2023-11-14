@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+import clipboard
 import os
 import shutil
 import tempfile
@@ -6,15 +8,24 @@ import webbrowser
 import re
 import random
 import time
+import threading
 import contextlib
 import tkinter as tk
-from tkinter import messagebox, filedialog
+from tkinter import messagebox, filedialog, ttk
 import wave
 import pygame
 from playsound import playsound
 import configparser
 from os import getenv
 from global_hotkeys import *
+from PIL import Image, ImageTk
+import datetime
+from tkinter import END
+import unidecode
+import pyperclip
+
+def clean_string(s):
+    return unidecode.unidecode(s)
 
 api_key = ''
 resource_region = 'westeurope'
@@ -29,7 +40,7 @@ gong_sound_path = None
 pygame.mixer.init()
 temp_dir = tempfile.mkdtemp()
 
-current_version = '1.3'
+current_version = '1.4'
 user = 'bravuralion'
 repo = 'TD2-Driver-PIS-SYSTEM'
 api_url = f"https://api.github.com/repos/{user}/{repo}/releases/latest"
@@ -39,7 +50,53 @@ voices = {
     'EN': ('en-US-JessaNeural', 'en-US'),
     'PL': ('pl-PL-AgnieszkaNeural', 'pl-PL'),
     'DE': ('de-DE-KatjaNeural', 'de-DE')
-}    
+}
+def start_main_window(operation_mode):
+    if operation_mode == "Driver Mode":
+        start_window.withdraw()
+        create_driver_window()
+    elif operation_mode == "Dispatcher Mode":
+        start_window.withdraw()
+        create_dispatcher_window()
+        pass
+
+def create_start_window():
+    global start_window
+    start_window = tk.Tk()
+    start_window.title("Start Window")
+    
+    ws = start_window.winfo_screenwidth()
+    hs = start_window.winfo_screenheight()
+    x = (ws/2) - (400/2)
+    y = (hs/2) - (400/2)
+    start_window.geometry('%dx%d+%d+%d' % (400, 460, x, y))
+
+    logo = tk.PhotoImage(file='res/logo.png')
+    logo_label = tk.Label(start_window, image=logo)
+    logo_label.image = logo
+    logo_label.pack()
+
+    operation_mode_label = tk.Label(start_window, text="Operation Mode")
+    operation_mode_label.pack()
+    operation_mode = ttk.Combobox(start_window, values=["Driver Mode", "Dispatcher Mode"])
+    operation_mode.pack()
+    operation_mode.set("Driver Mode")
+
+    start_button = tk.Button(start_window, text="Start", command=lambda: start_main_window(operation_mode.get()))
+    start_button.pack()
+
+    start_window.mainloop()
+
+def get_station_names():
+    response = requests.get("https://stacjownik.spythere.pl/api/getSceneries")
+    if response.status_code == 200:
+        station_data = response.json()
+        station_names = [station['name'] for station in station_data]
+        return station_names
+    else:
+        print("Fehler beim Abrufen der Stationen: HTTP-Status", response.status_code)
+        return []
+
 def load_categories_names():
     with open(categories_config_path, 'r', encoding='utf-8') as file:
         for line in file:
@@ -55,7 +112,7 @@ load_categories_names()
 def check_for_update():
     try:
         response = requests.get(api_url)
-        response.raise_for_status()  # Stellt sicher, dass die Anfrage erfolgreich war
+        response.raise_for_status()  
         latest_release = response.json()
         latest_version = latest_release['tag_name']
         download_url = latest_release['assets'][0]['browser_download_url']
@@ -68,17 +125,6 @@ def check_for_update():
     except requests.RequestException as e:
         messagebox.showerror("Update Check Failed", f"An error occurred while checking for updates: {e}")
 check_for_update()
-
-def on_closing():
-    try:
-        shutil.rmtree(temp_dir)
-    except OSError as e:
-        print(f"Error when deleting the temporary folder {temp_dir}: {e}")
-    
-    # Beenden des globalen Hotkey-Überprüfungsprozesses
-    stop_checking_hotkeys()
-    
-    root.destroy()
 
 def play_sound(wav_path):
     if not pygame.mixer.get_init():
@@ -109,13 +155,13 @@ def load_config():
 load_config()
 
 def on_hotkey_exit_left():
-    announce_exit('left')
+    announce_exit('left',language_combobox,train_number_textbox,stations_listbox)
 
 def on_hotkey_exit_right():
-    announce_exit('right')
+    announce_exit('right',language_combobox,train_number_textbox,stations_listbox)
 
 def on_hotkey_next_stop_only():
-    announce_exit('none')
+    announce_exit('none',language_combobox,train_number_textbox,stations_listbox)
 
 def register_hotkeys():
     hotkeys = [
@@ -129,7 +175,6 @@ def register_hotkeys():
             register_hotkey(hotkey, modifiers, callback)
         except KeyError as e:
             messagebox.showerror("Hotkey Error", f"Ein Fehler ist aufgetreten: {e}. Überprüfen Sie, ob der korrekte Schlüssel in der Konfigurationsdatei vorhanden ist.")
-
     start_checking_hotkeys()
 
 register_hotkeys()
@@ -148,35 +193,46 @@ def select_gong():
         filetypes=(("WAV Files", "*.wav"), ("All Files", "*.*"))
     )
 
-def load_schedule():
+def load_schedule(train_number_textbox, stations_listbox, blacklist_url, messagebox):
     try:
         response = requests.get("https://stacjownik.spythere.pl/api/getActiveTrainList")
         response.raise_for_status()
         trains_response = response.json()
         
-        selected_train_no = int(train_number_textbox.get())
+        train_number = train_number_textbox.get().strip()
+        if not train_number:
+            messagebox.showinfo("Information", "Please enter a train number.")
+            return
+        
+        selected_train_no = int(train_number)
         selected_train = next((train for train in trains_response if train['trainNo'] == selected_train_no), None)
-
+        
         if not selected_train:
             messagebox.showinfo("Information", "Train number not found.")
             return
-        stations_listbox.delete(0, tk.END)
-        stations_listbox.insert(tk.END, selected_train['timetable']['stopList'][0]['stopNameRAW'])
 
+        driver_name = selected_train.get('driverName', '').strip().lower()
+        response_blacklist = requests.get(blacklist_url)
+        blacklist = response_blacklist.text.strip().lower().split('\n') if response_blacklist.status_code == 200 else []
+        
+        if driver_name in blacklist:
+            messagebox.showerror("Blacklist", "The driver of this train is on the blacklist of this program.")
+            return
+
+        # Update der Stationsliste
+        stations_listbox.delete(0, tk.END)
+        stations_listbox.insert(tk.END, *[
+        ])
         for stop in selected_train['timetable']['stopList'][1:-1]:
             if 'ph' in stop['stopType'].lower():
                 stations_listbox.insert(tk.END, stop['stopNameRAW'])
 
-        if selected_train['timetable']['stopList']:
-            stations_listbox.insert(tk.END, selected_train['timetable']['stopList'][-1]['stopNameRAW'])
-
     except requests.RequestException as e:
         messagebox.showerror("Error", f"An error occurred: {e}")
 
-def announce_exit(exit_side):
+def announce_exit(exit_side,language_combobox,train_number_textbox,stations_listbox):
     selected_language = language_combobox.get()
-    language_key = selected_language[:2].upper()  # "German" -> "DE", "English" -> "EN", "Polish" -> "PL"
-
+    language_key = selected_language[:2].upper()
     selected_train_no = train_number_textbox.get()
     
     try:
@@ -189,13 +245,7 @@ def announce_exit(exit_side):
         if not selected_train:
             messagebox.showinfo("Information", "Train number not found.")
             return
-        response_blacklist = requests.get(blacklist_url)
-        if response_blacklist.status_code != 200:
-            return        
-        blacklist = response_blacklist.text.strip().lower().split('\n')            
-        if driver_name in blacklist:
-            messagebox.showerror("Blacklist", f"You are on the blacklist for this program. Contact the author for more information.")
-            return
+        
         category_key = selected_train['timetable']['category']
         category_name = categories_names.get(category_key, category_key)
 
@@ -233,7 +283,7 @@ def announce_exit(exit_side):
             final_announcement += config['last_station_final_stop'][language_key]
 
         print(final_announcement)  #Debugging
-        convert_text_to_speech(final_announcement, selected_language) 
+        start_convert_text_to_speech_thread(final_announcement, selected_language)
 
         if not is_last_station:
             stations_listbox.select_clear(current_index)
@@ -242,26 +292,31 @@ def announce_exit(exit_side):
     except requests.RequestException as e:
         messagebox.showerror("Error", f"An error occurred: {e}")
 
-def play_special_announcement(announcement_number):
+def play_special_announcement(announcement_number,language_combobox):
     try:
         special_announcement_key = str(announcement_number)
         announcement_text = config['Special'][special_announcement_key]
         selected_language = language_combobox.get()
-        convert_text_to_speech(announcement_text, selected_language)
+        start_convert_text_to_speech_thread(announcement_text, selected_language)
     except KeyError as e:
         messagebox.showerror("Fehler", f"An error has occurred: {e}. Check whether the correct key is present in the configuration file.")
+
+def start_convert_text_to_speech_thread(text, language):
+    thread = threading.Thread(target=convert_text_to_speech, args=(text, language))
+    thread.daemon = True
+    thread.start()
 
 def convert_text_to_speech(text, language):
     if gong_sound_path:
         play_sound(gong_sound_path)
     
     voice_name, lang = voices[language]
-    
+    print(text)
     headers = {
-        'Ocp-Apim-Subscription-Key': '374adb2e4c66480da0a34c03608dd522',
-        'Content-Type': 'application/ssml+xml',
-        'X-Microsoft-OutputFormat': 'riff-16khz-16bit-mono-pcm',
-        'User-Agent': 'PythonApp'
+        "Ocp-Apim-Subscription-Key": api_key,
+        "Content-Type": "application/ssml+xml",
+        "X-Microsoft-OutputFormat": "riff-16khz-16bit-mono-pcm",
+        "User-Agent": "PythonApp"
     }
     body = f"""
     <speak version='1.0' xml:lang='{lang}'>
@@ -285,54 +340,272 @@ def adjust_volume(value):
     new_volume = float(value) / 100
     pygame.mixer.music.set_volume(new_volume)
 
-root = tk.Tk()
-root.title('On-board Passenger Information System')
-root.geometry('480x430')
+def create_driver_window():
+    def on_closing():
+        try:
+            shutil.rmtree(temp_dir)
+        except OSError as e:
+            print(f"Error when deleting the temporary folder {temp_dir}: {e}")
+        stop_checking_hotkeys()  # Beenden Sie das Überprüfen der Hotkeys
+        if 'start_window' in globals():
+            start_window.destroy()
+        if 'driver_w' in globals():
+            driver_w.destroy()
+        if 'dispatcher_w' in globals():
+            dispatcher_w.destroy()
+        pygame.quit()
+        os._exit(0)
+    driver_w = tk.Toplevel()
+    driver_w.title('On-board Passenger Information System')
+    driver_w.geometry('480x430')
 
-train_number_textbox = tk.Entry(root)
-train_number_textbox.place(x=10, y=10, width=460, height=20)
+    train_number_textbox = tk.Entry(driver_w)
+    train_number_textbox.place(x=10, y=10, width=460, height=20)
 
-load_schedule_button = tk.Button(root, text='Load Schedule', command=load_schedule)
-load_schedule_button.place(x=10, y=40, width=460, height=30)
+    stations_listbox = tk.Listbox(driver_w)
+    stations_listbox.place(x=10, y=80, width=460, height=160)
 
-load_schedule_button = tk.Button(root, text='Load Schedule', command=load_schedule)
-load_schedule_button.place(x=10, y=40, width=460, height=30)
+    load_schedule_button = tk.Button(driver_w, text='Load Schedule', command=lambda: load_schedule(train_number_textbox, stations_listbox, blacklist_url, messagebox))
+    load_schedule_button.place(x=10, y=40, width=460, height=30)
 
-stations_listbox = tk.Listbox(root)
-stations_listbox.place(x=10, y=80, width=460, height=160)
+    exit_right_button = tk.Button(driver_w, text='Exit right', command=lambda: announce_exit('right',language_combobox,train_number_textbox,stations_listbox))
+    exit_right_button.place(x=170, y=250, width=150, height=40)
 
-exit_right_button = tk.Button(root, text='Exit right', command=lambda: announce_exit('right'))
-exit_right_button.place(x=170, y=250, width=150, height=40)
+    exit_left_button = tk.Button(driver_w, text='Exit left', command=lambda: announce_exit('left',language_combobox,train_number_textbox,stations_listbox))
+    exit_left_button.place(x=10, y=250, width=150, height=40)
 
-exit_left_button = tk.Button(root, text='Exit left', command=lambda: announce_exit('left'))
-exit_left_button.place(x=10, y=250, width=150, height=40)
+    exit_none_button = tk.Button(driver_w, text='Next Stop only', command=lambda: announce_exit('none',language_combobox,train_number_textbox,stations_listbox))
+    exit_none_button.place(x=330, y=250, width=140, height=40)
 
-exit_none_button = tk.Button(root, text='Next Stop only', command=lambda: announce_exit('none'))
-exit_none_button.place(x=330, y=250, width=140, height=40)
+    gong_button = tk.Button(driver_w, text='Select Gong (.WAV)', command=select_gong)
+    gong_button.place(x=10, y=300, width=460, height=20)
 
-gong_button = tk.Button(root, text='Select Gong (.WAV)', command=select_gong)
-gong_button.place(x=10, y=300, width=460, height=20)
+    special_buttons = []
+    for i in range(1, 6):
+        special_button = tk.Button(driver_w, text=f'S{i}',
+                                command=lambda i=i: play_special_announcement(i,language_combobox))
+        special_button.place(x=10 + 85 * (i-1), y=360, width=75, height=23)
+        special_buttons.append(special_button)
 
-special_buttons = []
-for i in range(1, 6):
-    special_button = tk.Button(root, text=f'S{i}',
-                               command=lambda i=i: play_special_announcement(i))
-    special_button.place(x=10 + 85 * (i-1), y=360, width=75, height=23)
-    special_buttons.append(special_button)
+    volume_label = tk.Label(driver_w, text='Volume:')
+    volume_label.place(x=10, y=410) 
 
-volume_label = tk.Label(root, text='Volume:')
-volume_label.place(x=10, y=410) 
+    volume_control = tk.Scale(driver_w, from_=0, to=100, orient='horizontal', command=adjust_volume)
+    volume_control.set(50) 
+    volume_control.place(x=60, y=390, width=140, height=50)
 
-volume_control = tk.Scale(root, from_=0, to=100, orient='horizontal', command=adjust_volume)
-volume_control.set(50) 
-volume_control.place(x=60, y=390, width=140, height=50)
+    language_combobox = tk.StringVar(driver_w)
+    language_combobox.set('DE')  # default value
+    language_options = ['DE', 'EN', 'PL']
 
-language_combobox = tk.StringVar(root)
-language_combobox.set('DE')  # default value
-language_options = ['DE', 'EN', 'PL']
+    language_dropdown = tk.OptionMenu(driver_w, language_combobox, *language_options)
+    language_dropdown.place(x=10, y=330, width=460, height=20)
 
-language_dropdown = tk.OptionMenu(root, language_combobox, *language_options)
-language_dropdown.place(x=10, y=330, width=460, height=20)
+    driver_w.protocol("WM_DELETE_WINDOW", on_closing)
+    pass
 
-root.protocol("WM_DELETE_WINDOW", on_closing)
-root.mainloop()
+def DP_add_to_log(log_console, message):
+    """
+    Adds a timestamp message to the log console widget.
+    
+    Args:
+    log_console (tk.Text): The text widget that serves as the log console.
+    message (str): The message to be logged.
+    """
+    timestamp = datetime.datetime.now().strftime("%H:%M:%S")
+    log_entry = f"{timestamp}: {message}\n"
+    log_console.insert(END, log_entry)
+    log_console.see(END)
+
+def DP_update_button_click(station_dropdown, train_dropdown, log_console):
+    selected_station_name = station_dropdown.get()
+    if selected_station_name:
+        try:
+            trains_response = requests.get("https://stacjownik.spythere.pl/api/getActiveTrainList").json()
+            relevant_trains = [train for train in trains_response if train['currentStationName'] == selected_station_name]
+            train_numbers = [train['trainNo'] for train in relevant_trains]
+            
+            train_dropdown['values'] = train_numbers
+            train_dropdown.set('')
+            DP_add_to_log(log_console, "Updating Train List")
+        except requests.RequestException as e:
+            messagebox.showerror("Error", f"An error occurred while updating the train list: {e}")
+
+def DP_generate_passing(track, gong_sound_path, audio_checkbox_var, language_listbox, log_console):
+    combined_announcement = ""
+    announcements = {
+        "EN": f"*STATION ANNOUNCEMENT* Attention at track {track}, A train is passing through. Please stand back.",
+        "PL": f"*OGŁOSZENIE STACYJNE* Uwaga! Na tor numer {track} wjedzie pociąg bez zatrzymania. Prosimy zachować ostrożność i nie zbliżać się do krawędzi peronu.",
+        "DE": f"*Bahnhofsdurchsage* Achtung am Gleis {track}, Zugdurchfahrt. Zurückbleiben bitte."
+    }
+
+    selected_indices = language_listbox.curselection()
+    selected_languages = [language_listbox.get(i) for i in selected_indices]
+    if not selected_indices:
+        messagebox.showinfo("Selection required", "Please select a language.")
+    else:
+        # Überprüfen Sie, welche Sprachen ausgewählt wurden
+        for lang_code in selected_languages:
+            announcement = announcements[lang_code].format(track=track)
+            combined_announcement += announcement + " "  # Fügen Sie die Ansage zur Gesamtansage hinzu
+            
+            # Entfernen Sie den Text zwischen den Sternchen für die Sprachansage
+            announcement_for_speech = re.sub(r'\*.*?\*', '', announcement)
+            
+            if audio_checkbox_var.get():  # Wenn die Audio-Checkbox ausgewählt ist
+                DP_add_to_log(log_console, f"Generating Audio announcement for {lang_code}.")
+                start_convert_text_to_speech_thread(announcement_for_speech, lang_code)
+
+        # Kopieren Sie die kombinierte Ansage in die Zwischenablage
+        clipboard.copy(combined_announcement)
+        messagebox.showinfo("Announcement", f"The following text has been copied to your clipboard:\n\n{combined_announcement}")
+        DP_add_to_log(log_console,"Job complete")
+
+def convert_to_proper_case(name):
+    return name.title()
+
+def generate_announcements(selected_languages, categories_names, selected_train, start_station, end_station, arrival_time, departure_time, track_dropdown, delay_minutes, stop_details):
+    announcements = {}
+    for lang in selected_languages:
+        if lang == 'EN':
+            if delay_minutes > 5:
+                text = f"*STATION ANNOUNCEMENT* The {categories_names[selected_train['timetable']['category']]} from station {start_station} to station {end_station}, scheduled arrival {arrival_time.strftime('%H:%M')}, will arrive approximately {delay_minutes} minutes late at platform {track_dropdown.get()}. The delay is subject to change. Please pay attention to announcements."
+                audio = f"The {categories_names[selected_train['timetable']['category']]} from station {start_station} to station {end_station}, scheduled arrival {arrival_time.strftime('%H:%M')}, will arrive approximately {delay_minutes} minutes late at platform {track_dropdown.get()}. The delay is subject to change. Please pay attention to announcements."
+            elif stop_details.get('terminatesHere'):
+                text = f"*STATION ANNOUNCEMENT* Attention at track {track_dropdown.get()}, the {categories_names[selected_train['timetable']['category']]} from {start_station} is arriving. This train ends here, please do not board the train."
+                audio = f"Attention at track {track_dropdown.get()}, the {categories_names[selected_train['timetable']['category']]} from {start_station} is arriving. This train ends here, please do not board the train."
+            else:
+                text = f"*STATION ANNOUNCEMENT* Attention at track {track_dropdown.get()}, The {categories_names[selected_train['timetable']['category']]} from {start_station} to {end_station} is arriving. The planned Departure is {departure_time.strftime('%H:%M')}."
+                audio = f"Attention at track {track_dropdown.get()}, The {categories_names[selected_train['timetable']['category']]} from {start_station} to {end_station} is arriving. The planned Departure is {departure_time.strftime('%H:%M')}."
+            announcements['EN'] = {'text': text, 'audio': audio}
+        # Fügen Sie hier ähnliche Blöcke für 'DE' und 'PL' hinzu
+    return announcements
+
+def generate_button_click(station_dropdown, train_dropdown, track_dropdown, categories_names, log_console, language_listbox):
+    selected_train_no = train_dropdown.get().strip()
+    selected_train_no = int(selected_train_no)
+
+    trains_response = requests.get("https://stacjownik.spythere.pl/api/getActiveTrainList").json()
+    selected_train = next((train for train in trains_response if train['trainNo'] == selected_train_no), None)
+    selected_station_name = station_dropdown.get()
+    selected_track = track_dropdown.get()
+
+    if selected_station_name and selected_train_no and selected_track:
+        stop_details = next((stop for stop in selected_train['timetable']['stopList']
+                             if selected_station_name.lower() in stop['stopNameRAW'].lower() and stop.get('mainStop')), None)
+
+        if not stop_details:
+            main_station_name = selected_station_name.split()[0]
+            stop_details = next((stop for stop in selected_train['timetable']['stopList']
+                                 if main_station_name.lower() in stop['stopNameRAW'].lower() and stop.get('mainStop')), None)
+        
+        print("Stoplist:")
+        print(selected_train['timetable']['stopList'])
+
+        if stop_details:
+            start_station = selected_train['timetable']['stopList'][0]['stopNameRAW']
+            end_station = selected_train['timetable']['stopList'][-1]['stopNameRAW']
+            departure_timestamp = stop_details['departureTimestamp']
+            arrival_timestamp = stop_details['arrivalTimestamp']
+
+            departure_time = datetime.datetime(1970, 1, 1) + datetime.timedelta(seconds=departure_timestamp / 1000)
+            arrival_time = datetime.datetime(1970, 1, 1) + datetime.timedelta(seconds=arrival_timestamp / 1000)
+
+            delay_minutes = stop_details['departureDelay']
+            selected_languages = [language_listbox.get(i) for i in language_listbox.curselection()]
+
+            announcements = generate_announcements(selected_languages, categories_names, selected_train, start_station, end_station, arrival_time, departure_time, track_dropdown, delay_minutes, stop_details)
+
+            # Kopieren des Textes für die Zwischenablage und Generieren der Audioansage
+            for lang in announcements:
+                pyperclip.copy(announcements[lang]['text'])
+                # Hier den Code zum Starten des Audio-Generierungs-Threads einfügen
+                start_convert_text_to_speech_thread(announcements[lang]['audio'], lang)
+
+        else:
+            DP_add_to_log(log_console, "No stop details found")
+
+def create_dispatcher_window():
+    def on_closing():
+        try:
+            shutil.rmtree(temp_dir)
+        except OSError as e:
+            print(f"Error when deleting the temporary folder {temp_dir}: {e}")
+        stop_checking_hotkeys()  # Beenden Sie das Überprüfen der Hotkeys
+        if 'start_window' in globals():
+            start_window.destroy()
+        if 'driver_w' in globals():
+            driver_w.destroy()
+        if 'dispatcher_w' in globals():
+            dispatcher_w.destroy()
+        pygame.quit()
+        os._exit(0)
+    dispatcher_w = tk.Toplevel()
+    dispatcher_w.title("TD2 Station Announcement Tool")
+    dispatcher_w.geometry("570x257")
+    dispatcher_w.resizable(False, False)
+
+    settings_group = tk.LabelFrame(dispatcher_w, text="Settings", width=177, height=121)
+    settings_group.place(x=381, y=10)
+    train_passing_group = tk.LabelFrame(dispatcher_w, text="Train Passing at", width=177, height=79)
+    train_passing_group.place(x=381, y=166)
+
+    tk.Label(dispatcher_w, text="Track").place(x=9, y=103)
+    tk.Label(dispatcher_w, text="Train").place(x=9, y=57)
+    tk.Label(dispatcher_w, text="Station").place(x=9, y=10)
+    tk.Label(dispatcher_w, text="Language").place(x=192, y=10)
+
+    station_Dropdown = ttk.Combobox(dispatcher_w)
+    station_Dropdown.place(x=12, y=29, width=162)
+
+    train_Dropdown = ttk.Combobox(dispatcher_w)
+    train_Dropdown.place(x=12, y=79, width=162)
+
+    trackDropdown = ttk.Combobox(dispatcher_w)
+    trackDropdown.place(x=12, y=122, width=162)
+
+    tk.Checkbutton(settings_group, text="Auto Update").place(x=6, y=0)
+    tk.Checkbutton(settings_group, text="Announce Delays").place(x=6, y=22)
+    audio_checkbox_var = tk.IntVar(value=0)
+    audio_checkbox = tk.Checkbutton(settings_group, text="Play Audio", variable=audio_checkbox_var)
+    audio_checkbox.place(x=6, y=42)
+    gong_button = tk.Button(settings_group, text="Station Gong", command=select_gong)
+    gong_button.place(x=6, y=62, width=110, height=23)
+
+    language_listbox = tk.Listbox(dispatcher_w)
+    language_listbox.insert(1, "EN")
+    language_listbox.insert(2, "PL")
+    language_listbox.insert(3, "DE")
+    language_listbox.place(x=192, y=29, width=147, height=49)
+    
+    Gernate_Announcement_Button = tk.Button(dispatcher_w, text="Generate Announcement", command=lambda: generate_button_click(station_Dropdown, train_Dropdown, trackDropdown, categories_names, log_console,language_listbox))
+    Gernate_Announcement_Button.place(x=192, y=122, width=147, height=23)
+    Update_Trains_button = tk.Button(dispatcher_w, text="Update Trains", command=lambda: DP_update_button_click(station_Dropdown,train_Dropdown,log_console))
+    Update_Trains_button.place(x=192, y=93, width=147, height=23)    
+
+    tk.Button(train_passing_group, text="1", command=lambda: DP_generate_passing('1', gong_sound_path, audio_checkbox_var, language_listbox, log_console)).place(x=6, y=0, width=28, height=23)
+    tk.Button(train_passing_group, text="2", command=lambda: DP_generate_passing("2", gong_sound_path, audio_checkbox_var, language_listbox, log_console)).place(x=40, y=0, width=28, height=23)
+    tk.Button(train_passing_group, text="3", command=lambda: DP_generate_passing("3", gong_sound_path, audio_checkbox_var, language_listbox, log_console)).place(x=74, y=0, width=28, height=23)
+    tk.Button(train_passing_group, text="4", command=lambda: DP_generate_passing("4", gong_sound_path, audio_checkbox_var, language_listbox, log_console)).place(x=108, y=0, width=28, height=23)
+    tk.Button(train_passing_group, text="5", command=lambda: DP_generate_passing("5", gong_sound_path, audio_checkbox_var, language_listbox, log_console)).place(x=142, y=0, width=28, height=23)
+    tk.Button(train_passing_group, text="6", command=lambda: DP_generate_passing("6", gong_sound_path, audio_checkbox_var, language_listbox, log_console)).place(x=6, y=30, width=28, height=23)
+    tk.Button(train_passing_group, text="7", command=lambda: DP_generate_passing("7", gong_sound_path, audio_checkbox_var, language_listbox, log_console)).place(x=40, y=30, width=28, height=23)
+    tk.Button(train_passing_group, text="8", command=lambda: DP_generate_passing("8", gong_sound_path, audio_checkbox_var, language_listbox, log_console)).place(x=74, y=30, width=28, height=23)
+    tk.Button(train_passing_group, text="9", command=lambda: DP_generate_passing("9", gong_sound_path, audio_checkbox_var, language_listbox, log_console)).place(x=108, y=30, width=28, height=23)
+    tk.Button(train_passing_group, text="10", command=lambda: DP_generate_passing("10", gong_sound_path, audio_checkbox_var, language_listbox, log_console)).place(x=142, y=30, width=28, height=23)
+
+    log_console = tk.Text(dispatcher_w, wrap='word', height=5, width=40)
+    log_console.place(x=12, y=166, width=363, height=79)
+    
+    for i in range(1, 601):
+        trackDropdown['values'] = (*trackDropdown['values'], str(i)) #Inserting Tracks up to 600
+    response = requests.get("https://stacjownik.spythere.pl/api/getSceneries")
+    if response.status_code == 200:  
+        stationNames = [scenery['name'] for scenery in response.json()]  
+        stationNames.sort()
+        station_Dropdown['values'] = stationNames   
+    dispatcher_w.protocol("WM_DELETE_WINDOW", on_closing)
+    pass
+create_start_window()
+
+
