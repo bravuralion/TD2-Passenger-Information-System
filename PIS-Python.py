@@ -191,7 +191,6 @@ def load_schedule(train_number_textbox, stations_listbox, blacklist_url, message
         trains_response = response.json()
         
         train_number = train_number_textbox.get().strip()
-        print(train_number_textbox.get())
         if not train_number:
             messagebox.showinfo("Information", "Please enter a train number.")
             return
@@ -213,14 +212,13 @@ def load_schedule(train_number_textbox, stations_listbox, blacklist_url, message
 
         # Update der Stationsliste
         stations_listbox.delete(0, tk.END)
-        stations_listbox.insert(tk.END, *[
-        ])
-        for stop in selected_train['timetable']['stopList'][1:-1]:
-            if 'ph' in stop['stopType'].lower():
+        for stop in selected_train['timetable']['stopList']:
+            if 'ph' in stop['stopType'].lower() or stop == selected_train['timetable']['stopList'][0] or stop == selected_train['timetable']['stopList'][-1]:
                 stations_listbox.insert(tk.END, stop['stopNameRAW'])
 
     except requests.RequestException as e:
         messagebox.showerror("Error", f"An error occurred: {e}")
+
 
 def announce_exit(exit_side,language_combobox,train_number_textbox,stations_listbox):
     selected_language = language_combobox.get()
