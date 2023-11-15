@@ -23,6 +23,8 @@ import datetime
 from tkinter import END
 import unidecode
 import pyperclip
+import zipfile
+from io import BytesIO
 
 def clean_string(s):
     return unidecode.unidecode(s)
@@ -76,7 +78,6 @@ def register_hotkeys(exit_left_func, exit_right_func, next_stop_only_func):
     start_checking_hotkeys()
 
 def create_start_window():
-
     global start_window
     start_window = tk.Tk()
     start_window.title("Start Window")
@@ -87,9 +88,13 @@ def create_start_window():
     y = (hs/2) - (400/2)
     start_window.geometry('%dx%d+%d+%d' % (400, 460, x, y))
 
-    logo = tk.PhotoImage(file='res/logo.png')
-    logo_label = tk.Label(start_window, image=logo)
-    logo_label.image = logo
+    with zipfile.ZipFile('res/Ressources.pak', 'r') as z:
+        with z.open('Logo.png') as logo_file:
+            logo_image = Image.open(BytesIO(logo_file.read()))
+            logo_photo = ImageTk.PhotoImage(logo_image)
+
+    logo_label = tk.Label(start_window, image=logo_photo)
+    logo_label.image = logo_photo  
     logo_label.pack()
 
     operation_mode_label = tk.Label(start_window, text="Operation Mode")
@@ -116,7 +121,6 @@ def get_station_names():
 def load_categories_names():
     with open(categories_config_path, 'r', encoding='utf-8') as file:
         for line in file:
-            # Ignorieren von Leerzeilen und Kommentaren
             if line.strip() and not line.startswith('#'):
                 pair = line.split('=', 1)
                 if len(pair) == 2:
@@ -209,8 +213,7 @@ def load_schedule(train_number_textbox, stations_listbox, blacklist_url, message
         if driver_name in blacklist:
             messagebox.showerror("Blacklist", "The driver of this train is on the blacklist of this program.")
             return
-
-        # Update der Stationsliste
+        
         stations_listbox.delete(0, tk.END)
         for stop in selected_train['timetable']['stopList']:
             if 'ph' in stop['stopType'].lower() or stop == selected_train['timetable']['stopList'][0] or stop == selected_train['timetable']['stopList'][-1]:
@@ -336,7 +339,7 @@ def create_driver_window():
             shutil.rmtree(temp_dir)
         except OSError as e:
             print(f"Error when deleting the temporary folder {temp_dir}: {e}")
-        stop_checking_hotkeys()  # Beenden Sie das Überprüfen der Hotkeys
+        stop_checking_hotkeys()
         if 'start_window' in globals():
             start_window.destroy()
         if 'driver_w' in globals():
@@ -384,8 +387,11 @@ def create_driver_window():
     volume_control.set(50) 
     volume_control.place(x=60, y=390, width=140, height=50)
 
+    donate_button = tk.Button(driver_w, text='Donate', command=lambda: webbrowser.open("https://paypal.me/furryfm"))
+    donate_button.place(x=350, y=405, width=75, height=20)
+
     language_combobox = tk.StringVar(driver_w)
-    language_combobox.set('DE')  # default value
+    language_combobox.set('DE')
     language_options = ['DE', 'EN', 'PL']
 
     language_dropdown = tk.OptionMenu(driver_w, language_combobox, *language_options)
@@ -440,21 +446,18 @@ def DP_generate_passing(track, gong_sound_path, audio_checkbox_var, language_com
         "DE": f"*Bahnhofsdurchsage* Achtung am Gleis {track}, Zugdurchfahrt. Zurückbleiben bitte."
     }
 
-    selected_language = language_combobox.get()  # Direktes Abrufen des ausgewählten Werts
+    selected_language = language_combobox.get()
     selected_languages = [selected_language] 
-        # Überprüfen Sie, welche Sprachen ausgewählt wurden
+
     for lang_code in selected_languages:
         announcement = announcements[lang_code].format(track=track)
-        combined_announcement += announcement + " "  # Fügen Sie die Ansage zur Gesamtansage hinzu
-            
-        # Entfernen Sie den Text zwischen den Sternchen für die Sprachansage
+        combined_announcement += announcement + " "              
         announcement_for_speech = re.sub(r'\*.*?\*', '', announcement)
             
-        if audio_checkbox_var.get():  # Wenn die Audio-Checkbox ausgewählt ist
+        if audio_checkbox_var.get():  
             DP_add_to_log(log_console, f"Generating Audio announcement for {lang_code}.")
             start_convert_text_to_speech_thread(announcement_for_speech, lang_code)
 
-        # Kopieren Sie die kombinierte Ansage in die Zwischenablage
         clipboard.copy(combined_announcement)
         messagebox.showinfo("Announcement", f"The following text has been copied to your clipboard:\n\n{combined_announcement}")
         DP_add_to_log(log_console,"Job complete")
@@ -523,12 +526,10 @@ def generate_button_click(station_dropdown, train_dropdown, track_dropdown, cate
         stop_details = next((stop for stop in stop_list if selected_station_name in stop['stopNameRAW'] and stop.get('mainStop')), None)
 
         if not stop_details:
-            # Versuch, die Übereinstimmung mit dem ersten Wort des Namens zu finden
             main_station_name = selected_station_name.split(' ')[0]
             stop_details = next((stop for stop in stop_list if main_station_name in stop['stopNameRAW'] and stop.get('mainStop')), None)
 
         if not stop_details:
-            # Versuch, die Übereinstimmung mit dem letzten Wort des Namens zu finden
             main_station_name = selected_station_name.split(' ')[-1]
             stop_details = next((stop for stop in stop_list if main_station_name in stop['stopNameRAW'] and stop.get('mainStop')), None)
         
@@ -545,12 +546,11 @@ def generate_button_click(station_dropdown, train_dropdown, track_dropdown, cate
             arrival_time = datetime.datetime(1970, 1, 1) + datetime.timedelta(seconds=arrival_timestamp / 1000)
 
             delay_minutes = stop_details['departureDelay']
-            selected_language = language_combobox.get()  # Direktes Abrufen des ausgewählten Werts
+            selected_language = language_combobox.get() 
             selected_languages = [selected_language]
 
             announcements = generate_announcements(selected_languages, categories_names, selected_train, start_station, end_station, arrival_time, departure_time, track_dropdown, delay_minutes, stop_details)
 
-            # Kopieren des Textes für die Zwischenablage und Generieren der Audioansage
             for lang in announcements:
                 pyperclip.copy(announcements[lang]['text'])                
                 start_convert_text_to_speech_thread(announcements[lang]['audio'], lang)
@@ -566,7 +566,7 @@ def create_dispatcher_window():
             shutil.rmtree(temp_dir)
         except OSError as e:
             print(f"Error when deleting the temporary folder {temp_dir}: {e}")
-        stop_checking_hotkeys()  # Beenden Sie das Überprüfen der Hotkeys
+        stop_checking_hotkeys()
         if 'start_window' in globals():
             start_window.destroy()
         if 'driver_w' in globals():
@@ -616,11 +616,14 @@ def create_dispatcher_window():
     language_combobox['values'] = ['EN', 'PL', 'DE']
     language_combobox.set('EN')  # Standardwert setzen
     language_combobox.place(x=192, y=29, width=147, height=23)
-    
-    Gernate_Announcement_Button = tk.Button(dispatcher_w, text="Generate Announcement", command=lambda: generate_button_click(station_Dropdown, train_Dropdown, trackDropdown, categories_names, log_console,language_combobox,audio_checkbox_var))
-    Gernate_Announcement_Button.place(x=192, y=122, width=147, height=23)
+
     Update_Trains_button = tk.Button(dispatcher_w, text="Update Trains", command=lambda: DP_update_button_click(station_Dropdown,train_Dropdown,log_console))
-    Update_Trains_button.place(x=192, y=93, width=147, height=23)    
+    Update_Trains_button.place(x=192, y=59, width=147, height=23)  
+    Gernate_Announcement_Button = tk.Button(dispatcher_w, text="Generate Announcement", command=lambda: generate_button_click(station_Dropdown, train_Dropdown, trackDropdown, categories_names, log_console,language_combobox,audio_checkbox_var))
+    Gernate_Announcement_Button.place(x=192, y=89, width=147, height=23)
+
+    donate_button = tk.Button(dispatcher_w, text='Donate', command=lambda: webbrowser.open("https://paypal.me/furryfm"))
+    donate_button.place(x=400, y=138, width=147, height=23)  
 
     tk.Button(train_passing_group, text="1", command=lambda: DP_generate_passing('1', gong_sound_path, audio_checkbox_var, language_combobox, log_console)).place(x=6, y=0, width=28, height=23)
     tk.Button(train_passing_group, text="2", command=lambda: DP_generate_passing("2", gong_sound_path, audio_checkbox_var, language_combobox, log_console)).place(x=40, y=0, width=28, height=23)
@@ -637,7 +640,7 @@ def create_dispatcher_window():
     log_console.place(x=12, y=166, width=363, height=79)
     
     for i in range(1, 601):
-        trackDropdown['values'] = (*trackDropdown['values'], str(i)) #Inserting Tracks up to 600
+        trackDropdown['values'] = (*trackDropdown['values'], str(i))
     response = requests.get("https://stacjownik.spythere.pl/api/getSceneries")
     if response.status_code == 200:  
         stationNames = [scenery['name'] for scenery in response.json()]  
@@ -647,5 +650,4 @@ def create_dispatcher_window():
     dispatcher_w.protocol("WM_DELETE_WINDOW", on_closing)
     pass
 create_start_window()
-
 
