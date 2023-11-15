@@ -44,7 +44,7 @@ temp_dir = tempfile.mkdtemp()
 
 global train_number_textbox, stations_listbox, language_combobox
 
-current_version = '1.4'
+current_version = '2.0'
 user = 'bravuralion'
 repo = 'TD2-Driver-PIS-SYSTEM'
 api_url = f"https://api.github.com/repos/{user}/{repo}/releases/latest"
@@ -88,8 +88,8 @@ def create_start_window():
     y = (hs/2) - (400/2)
     start_window.geometry('%dx%d+%d+%d' % (400, 460, x, y))
 
-    with zipfile.ZipFile('res/Ressources.pak', 'r') as z:
-        with z.open('Logo.png') as logo_file:
+    with zipfile.ZipFile('res/ressources.pak', 'r') as z:
+        with z.open('logo.png') as logo_file:
             logo_image = Image.open(BytesIO(logo_file.read()))
             logo_photo = ImageTk.PhotoImage(logo_image)
 
@@ -115,7 +115,7 @@ def get_station_names():
         station_names = [station['name'] for station in station_data]
         return station_names
     else:
-        print("Fehler beim Abrufen der Stationen: HTTP-Status", response.status_code)
+        print("Error when retrieving the stations: HTTP status", response.status_code)
         return []
 
 def load_categories_names():
