@@ -21,6 +21,7 @@ This program simulates a Passenger Information System for the game Train Driver 
 -  Dispatcher Mode: Automatic detection of the trains in the station
 -  Dispatcher Mode: Automatic generation of the station announcement based on the timetable ("passing through", "stop", "train ends")
 -  Dispatcher Mode: 10 buttons to generate a fast train passing announcement
+-  Dispatcher Mode: Automatic mention of the delay if it is over 5 minutes
 -  More features to come
 
 You can either use the hotkeys defined in config.cfg or press the buttons manually. "Next Stop only" only announces the next stop without mentioning an exit side. Occasionally there is an additional announcement.
