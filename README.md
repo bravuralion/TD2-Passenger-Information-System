@@ -70,7 +70,7 @@ can Check the generated Announcement.
 **Note: The announcements for a PH are generated only for the primary station, not for small stops.**
 
 ![enter image description here](https://cloud.furry.fm/index.php/apps/files_sharing/publicpreview/foi59jd93yBnbjs?file=&fileId=1093648&x=3844&y=1951&a=true)
-The program offers the possibility to adapt the text for the voice output. This currently requires 2 files:
+The program offers the possibility to adapt the text for the voice generation in the Driver mode. This currently requires 2 files:
 **Categories.cfg**
 
 ![enter image description here](https://cloud.furry.fm/index.php/apps/files_sharing/publicpreview/ZgD7mCs6mkfzaRA?file=&fileId=1093589&x=3844&y=1951&a=true)
@@ -80,10 +80,10 @@ This file is used to convert the train category from the shortcode to the long v
 
 ![enter image description here](https://cloud.furry.fm/index.php/apps/files_sharing/publicpreview/BDzFz79a8FCAN4q?file=&fileId=1093591&x=3844&y=1951&a=true)
 
-This is the main file that is used for the announcements. From line 1 to 24 are the different text templates for English, German and Polish. These can be customized individually. Please note: The adjustment must be made before the program is started, otherwise the changes will be ignored. 
-The announcements "Additional_Announcement_XX" are special announcements that are randomly added to the announcement.
-$Hotkey_XY are used for the hotkey assignment for the exit right, left or the announcement without naming the exit.
-$Special1-5 are for the buttons S1 to S5 which you can use for your own special announcements. German special announcements are currently defined there.
+This is the main file that is used for the announcements. Here you can see the templates for English, German, and Polish. These can be customized individually. Please note: The adjustment must be made before the program is started, otherwise the changes will be ignored. 
+Additional_Announcement: are special announcements that are randomly added to the announcement.
+Special: These are for the buttons S1 to S5 which you can use for your own special announcements. German special announcements are currently defined there.
+Hotkey: The hotkeys for the 3 buttons in driver mode are defined here.
 
 ![enter image description here](https://cloud.furry.fm/index.php/apps/files_sharing/publicpreview/8S7Xini4WtQ4cmF?file=&fileId=1093668&x=3844&y=1951&a=true)
 
