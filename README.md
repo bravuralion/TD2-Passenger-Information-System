@@ -5,19 +5,23 @@ This program simulates a Passenger Information System for the game Train Driver 
 
 ![enter image description here](https://cloud.furry.fm/index.php/apps/files_sharing/publicpreview/R7CXwYWC3wfx3wo?file=&fileId=1093632&x=3844&y=1951&a=true)
 
--   Automatic determination of the timetable
--   Custom Announcement for the Starting Station
--   Custom Announcement for the Last Station
--   Announcement option for exiting right or left, alternatively only the announcement of the next stop.
--   Next Station is
--   5 Buttons for Special Announcements
--   Option to use a chime that is played before each announcement.
--   The next station is selected automatically
--   Auto Update: If a new version is detected, you can download the new version via the app
--   Support for EN,DE, PL
--   All Audio Announcements can be customized
--   All Hotkeys can be customized via config.cfg
-- More features to come
+-   General: If a new version is detected, you can download the new version via the app
+-	  General: Support for English, German and Polish
+-   Driver Mode: Automatic determination of the timetable
+-   Driver Mode: Custom Announcement for the Starting Station
+-   Driver Mode: Custom Announcement for the Last Station
+-   Driver Mode: Announcement option for exiting right or left, alternatively only the announcement of the next stop.
+-   Driver Mode: 5 Buttons for Special Announcements
+-   Driver Mode: Option to use a chime that is played before each announcement.
+-   Driver Mode: Auto selection of the next Station
+-   Driver Mode: All Audio Announcements can be customized
+-  	Driver Mode: Announcements can be played via a Hotkey
+-	  Driver Mode: Adjustment of the Output Volume for the Chime and Announcement
+-	  Dispatcher Mode: Auto load all available Stations
+-	  Dispatcher Mode: Automatic detection of the trains in the station
+-	  Dispatcher Mode: Automatic generation of the station announcement based on the timetable ("passing through", "stop", "train ends")
+-	  Dispatcher Mode: 10 buttons to generate a fast train passing announcement
+-   More features to come
 
 More features to come :)
 
