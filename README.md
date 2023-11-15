@@ -24,7 +24,14 @@ This program simulates a Passenger Information System for the game Train Driver 
 -  Dispatcher Mode: Automatic mention of the delay if it is over 5 minutes
 -  More features to come
 
-You can either use the hotkeys defined in config.cfg or press the buttons manually. "Next Stop only" only announces the next stop without mentioning an exit side. Occasionally there is an additional announcement.
+![enter image description here](https://cloud.furry.fm/index.php/apps/files_sharing/publicpreview/XcZNswYxk8PgTnd?file=&fileId=1094001&x=1926&y=1056&a=true)
+![enter image description here](https://cloud.furry.fm/index.php/apps/files_sharing/publicpreview/tZCD2s7BQxzZcTY?file=&fileId=1093590&x=1926&y=1056&a=true)
+
+This mode is intended for the train driver to generate announcements for his train. The announcements are logically only for passenger trains. As soon as you have received a timetable in Train Driver 2, enter the train number at the top and click on "Load Schedule". The timetable will then be loaded. Note: The first and last stations are always loaded as well as all stops that are defined as PH in the timetable, all other entries in the timetable are ignored. To generate an announcement, select the stop for which you want to make an announcement. There are now 3 options for the announcement: Exit right, Exit left and Next Stop Only. The first two options add the exit side to the announcement and Next Stop Only only mentions the next stop without mentioning an exit side. These 3 buttons also offer a hotkey function. More about this in the Hotkeys section. The announcements are always generated in the currently selected language. To change this, simply change the language in the selection menu.
+
+There is also the option to play a chime before each announcement: To do this, press the "Select Gong" button and select the corresponding audio file.
+The driver also has the option of generating special announcements. Buttons S1 to S5 are available for this purpose. The texts for these can be customised via config.cfg. Attention: Please make sure that the language selection corresponds to the text in the config.cfg.
+
 ![enter image description here](https://cloud.furry.fm/index.php/apps/files_sharing/publicpreview/foi59jd93yBnbjs?file=&fileId=1093648&x=3844&y=1951&a=true)
 The program offers the possibility to adapt the text for the voice output. This currently requires 2 files:
 **Categories.cfg**
