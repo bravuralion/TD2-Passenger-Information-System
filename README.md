@@ -17,7 +17,7 @@ This program simulates a Passenger Information System for the game Train Driver 
 -   Driver Mode: All Audio Announcements can be customized
 -  	Driver Mode: Announcements can be played via a Hotkey
 -	  Driver Mode: Adjustment of the Output Volume for the Chime and Announcement
--	  Dispatcher Mode: Auto load all available Stations
+-	  Dispatcher Mode: Auto-load all available Stations
 -	  Dispatcher Mode: Automatic detection of the trains in the station
 -	  Dispatcher Mode: Automatic generation of the station announcement based on the timetable ("passing through", "stop", "train ends")
 -	  Dispatcher Mode: 10 buttons to generate a fast train passing announcement
