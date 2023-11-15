@@ -70,6 +70,7 @@ can Check the generated Announcement.
 **Note: The announcements for a PH are generated only for the primary station, not for small stops.**
 
 ![enter image description here](https://cloud.furry.fm/index.php/apps/files_sharing/publicpreview/foi59jd93yBnbjs?file=&fileId=1093648&x=3844&y=1951&a=true)
+
 The program offers the possibility to adapt the text for the voice generation in the Driver mode. This currently requires 2 files:
 **Categories.cfg**
 
@@ -81,27 +82,16 @@ This file is used to convert the train category from the shortcode to the long v
 ![enter image description here](https://cloud.furry.fm/index.php/apps/files_sharing/publicpreview/BDzFz79a8FCAN4q?file=&fileId=1093591&x=3844&y=1951&a=true)
 
 This is the main file that is used for the announcements. Here you can see the templates for English, German, and Polish. These can be customized individually. Please note: The adjustment must be made before the program is started, otherwise the changes will be ignored. 
+
 Additional_Announcement: are special announcements that are randomly added to the announcement.
+
 Special: These are for the buttons S1 to S5 which you can use for your own special announcements. German special announcements are currently defined there.
+
 Hotkey: The hotkeys for the 3 buttons in driver mode are defined here.
 
 ![enter image description here](https://cloud.furry.fm/index.php/apps/files_sharing/publicpreview/8S7Xini4WtQ4cmF?file=&fileId=1093668&x=3844&y=1951&a=true)
 
-Hotkeys can be used for the Buttons "Exit Left, "Exit Right" and "Next Stop Only" The Hotkeys can be defined in the config.cfg (see above). Please note that the Hotkeys only work when the App is in Focus! You can use any Program to do that. In this Example, i show you how to do that with Streamdeck:
-
-Ad Focus Windows by Process Name from the Windows Gizmos Library  and set "Driver PIS System" as the Process Name:
-
-![enter image description here](https://cloud.furry.fm/index.php/apps/files_sharing/publicpreview/mJ4eeW4x49TsBws?file=&fileId=1093522&x=1926&y=1057&a=true)
-
-Next add a Hotkey Function and klick on the little Arrow:
-
-![enter image description here](https://cloud.furry.fm/index.php/apps/files_sharing/publicpreview/z8DPpMFe4gxHnWo?file=&fileId=1093523&x=1926&y=1057&a=true)
-
-Then Select the F Keys -> F13, F14 or F15 depending on what you want:
-
-![enter image description here](https://cloud.furry.fm/index.php/apps/files_sharing/publicpreview/GNnr3CpqbD78CDL?file=&fileId=1093521&x=1926&y=1057&a=true)
-
-Thats it. You can now use the Hotkeys :) Ps: You can add a third step where the Focus goes back to TD2
+Hotkeys can be used for the Buttons "Exit Left, "Exit Right" and "Next Stop Only" The Hotkeys can be defined in the config.cfg (see above). Please note that the Hotkeys only work when the App is started as Admin!
 
 ![enter image description here](https://cloud.furry.fm/index.php/apps/files_sharing/publicpreview/D5fi2oJJdH9yaHj?file=&fileId=1093667&x=3844&y=1951&a=true)
 
