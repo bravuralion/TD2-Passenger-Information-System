@@ -38,6 +38,8 @@ The driver also has the option of generating special announcements. Buttons S1 t
 
 ![enter image description here](https://cloud.furry.fm/index.php/apps/files_sharing/publicpreview/CEnNpezKyjHGDzw?file=&fileId=1094002&x=1205&y=645&a=true)
 
+![enter image description here](https://cloud.furry.fm/index.php/apps/files_sharing/publicpreview/NWzPHBbMQNe7CeQ?file=&fileId=1094046&x=1926&y=1056&a=true)
+
 This mode is for the dispatcher. The tool is designed to generate platform announcements. Audio announcements are generated and the announcement text is copied to the clipboard so that it can be pasted into the Train Driver 2 in-game chat. The tool automatically reads the train timetable and generates the announcements accordingly. Output is implemented in English, German, and Polish.
 
 At the moment, the App generates the following Announcements fully automatically depending on the Timetable:  
