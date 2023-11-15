@@ -5,8 +5,8 @@ This program simulates a Passenger Information System for the game Train Driver 
 
 ![enter image description here](https://cloud.furry.fm/index.php/apps/files_sharing/publicpreview/R7CXwYWC3wfx3wo?file=&fileId=1093632&x=3844&y=1951&a=true)
 
--   General: If a new version is detected, you can download the new version via the app
--	  General: Support for English, German and Polish
+-  General: If a new version is detected, you can download the new version via the app
+-  General: Support for English, German and Polish
 -   Driver Mode: Automatic determination of the timetable
 -   Driver Mode: Custom Announcement for the Starting Station
 -   Driver Mode: Custom Announcement for the Last Station
