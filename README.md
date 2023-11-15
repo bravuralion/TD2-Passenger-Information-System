@@ -1,9 +1,7 @@
 
 ![enter image description here](https://cloud.furry.fm/index.php/apps/files_sharing/publicpreview/tZCD2s7BQxzZcTY?file=&fileId=1093590&x=3844&y=1951&a=true)
 ![enter image description here](https://cloud.furry.fm/index.php/apps/files_sharing/publicpreview/a7Xkk97Ys8wALPi?file=&fileId=1093616&x=3844&y=1951&a=true)
-As you may know, I have already written a tool for the dispatcher where you can make station announcements: https://td2.info.pl/english-boards/simple-text-announcement-generator/
-
-I have written a simple tool in Powershell that the train driver can use to generate announcements for his passengers. The program is designed to be as simple as possible. The timetable is loaded automatically and the announcements are generated with Microsoft Azure Voice. There is also the option of making special announcements. Hotkeys for the most important functions are supported and the voice output can be customized via a configuration file. (Tutorial in this article below). The program is constantly being expanded with new features, so check this post regularly :)
+This program simulates a Passenger Information System for the game Train Driver 2. The tool was created from 2 individual Powershell programs which have now been rewritten in Python and have been combined. There is a separate mode for the train driver to generate announcements for the train and its passengers and a mode for the dispatcher to generate platform announcements. The tool is designed to maximize the degree of automation with minimal input from the user. 
 
 ![enter image description here](https://cloud.furry.fm/index.php/apps/files_sharing/publicpreview/R7CXwYWC3wfx3wo?file=&fileId=1093632&x=3844&y=1951&a=true)
 
