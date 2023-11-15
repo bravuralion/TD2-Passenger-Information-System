@@ -42,35 +42,17 @@ This mode is for the dispatcher. The tool is designed to generate platform annou
 
 At the moment, the App generates the following Announcements fully automatically depending on the Timetable:  
   
-**If a train has a PH in a Station and has no Delay, the Announcement looks like this:  
-**  
-
-Quote
-
+**If a train has a PH in a Station and has no Delay, the Announcement looks like this:**  
 > *STATION ANNOUNCEMENT* Attention at track 1, The pospieszny from Trzymałkowice to LIGOTA GRABOWSKA is arriving. The planned Departure is 12:05. *OGŁOSZENIE STACYJNE* Uwaga! Pociąg pospieszny ze stacji Trzymałkowice do stacji LIGOTA GRABOWSKA wjedzie na tor 1, Planowy odjazd pociągu o godzinie 12:05.
 
-  
-**If a train has a PH in a Station and has a Delay > 5 Minutes, the Announcement looks like this:  
-**  
-
-Quote
-
+**If a train has a PH in a Station and has a Delay > 5 Minutes, the Announcement looks like this:**  
 > *STATION ANNOUNCEMENT* The pospieszny from station CZERMIN to station ŻORY, scheduled arrival 12:02, will arrive approximately 9 minutes late at platform 1. The delay is subject to change. Please pay attention to announcements. *OGŁOSZENIE STACYJNE* Uwaga! Pociąg pospieszny ze stacji CZERMIN do stacji ŻORY wjedzie na tor 1, planowy przyjazd 12:02, przyjedzie z opóźnieniem około 9 minut. Opóźnienie może ulec zmianie. Prosimy o zwracanie uwagi na komunikaty.
 
-  
-**If a Train ends at the Station, the Announcement looks like this:  
-**  
-
-Quote
-
+**If a Train ends at the Station, the Announcement looks like this:**  
 > *STATION ANNOUNCEMENT* Attention at track 1, the pospieszny from is arriving. This train ends here, please do not board the train. *OGŁOSZENIE STACYJNE* Uwaga na tor 1, przyjedzie Pociąg pospieszny ze stacji . Pociąg kończy bieg. Prosimy zachować ostrożność i nie zbliżać się do krawędzi peronu
 
   
-**If a train has no PH, is passing through, or has no timetable, this announcement is generated  
-**  
-
-Quote
-
+**If a train has no PH, is passing through, or has no timetable, this announcement is generated**  
 > *STATION ANNOUNCEMENT* Attention at track 1, A train is passing through. Please stand back. *OGŁOSZENIE STACYJNE* Uwaga! Na tor 1 wjedzie pociąg bez zatrzymania. Prosimy zachować ostrożność i nie zbliżać się do krawędzi peronu.
 
 **How to use the Mode:**
