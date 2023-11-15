@@ -25,6 +25,7 @@ import unidecode
 import pyperclip
 import zipfile
 from io import BytesIO
+from pypresence import Presence
 
 def clean_string(s):
     return unidecode.unidecode(s)
@@ -39,6 +40,9 @@ categories_config_path = 'config/categories.cfg'
 categories_names = {}
 wav_output_path = f"{getenv('APPDATA')}\\TD2-AN.wav"
 gong_sound_path = None
+CLIENT_ID = ''  
+discord_rpc = Presence(CLIENT_ID)
+
 pygame.mixer.init()
 temp_dir = tempfile.mkdtemp()
 
@@ -55,6 +59,20 @@ voices = {
     'PL': ('pl-PL-AgnieszkaNeural', 'pl-PL'),
     'DE': ('de-DE-KatjaNeural', 'de-DE')
 }
+
+def connect_discord():
+    discord_rpc.connect()
+
+def update_discord_status(mode, train_number=None, end_station=None):
+    state = "TD2 Driver Mode, No Train loaded" if mode == "Driver Mode" else "Dispatcher Mode"
+    details = f"Driving Train: {train_number} to {end_station}" if train_number and end_station else "Idle"
+
+    if details:  # Stellen Sie sicher, dass 'details' nicht leer ist
+        discord_rpc.update(state=state, details=details)
+
+def close_discord():
+    discord_rpc.close()
+
 def start_main_window(operation_mode):
     if operation_mode == "Driver Mode":
         start_window.withdraw()
@@ -80,7 +98,8 @@ def register_hotkeys(exit_left_func, exit_right_func, next_stop_only_func):
 def create_start_window():
     global start_window
     start_window = tk.Tk()
-    start_window.title("Start Window")
+    start_window.title("TD2 Passenger Information System")
+    start_window.iconbitmap("res/favicon.ico")
     
     ws = start_window.winfo_screenwidth()
     hs = start_window.winfo_screenheight()
@@ -201,7 +220,8 @@ def load_schedule(train_number_textbox, stations_listbox, blacklist_url, message
         
         selected_train_no = int(train_number)
         selected_train = next((train for train in trains_response if train['trainNo'] == selected_train_no), None)
-        
+        end_station = selected_train['timetable']['stopList'][-1]['stopNameRAW']
+        update_discord_status("Driver Mode", train_number, end_station)
         if not selected_train:
             messagebox.showinfo("Information", "Train number not found.")
             return
@@ -346,8 +366,11 @@ def create_driver_window():
             driver_w.destroy()
         if 'dispatcher_w' in globals():
             dispatcher_w.destroy()
+        close_discord()
         pygame.quit()
         os._exit(0)
+    connect_discord()  # Verbinden mit Discord beim Starten des Fahrermodus
+    update_discord_status("Driver Mode")
     driver_w = tk.Toplevel()
     driver_w.title('On-board Passenger Information System')
     driver_w.geometry('480x430')
