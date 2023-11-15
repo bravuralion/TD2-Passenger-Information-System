@@ -23,12 +23,6 @@ This program simulates a Passenger Information System for the game Train Driver 
 -  Dispatcher Mode: 10 buttons to generate a fast train passing announcement
 -  More features to come
 
-More features to come :)
-
-**IMPORTANT: It can happen that the Antivirus blocks the Exe as it detects that it runs a Powershell Script. You may have to whitelist the exe to be able to run it. This is a known issue but im on it to improve on that matter so that the executable will be signed in the future. https://github.com/MScholtes/Win-PS2EXE/issues/4**
-
-Extract the content of the zip where you want. Be sure that the .cfg files are next to the exe file. Run the Program and enter your Train number. After that, load the schedule and select the first station of which you want to make an announcement. Make sure that you have selected the correct language in which you want the voice output.
-
 You can either use the hotkeys defined in config.cfg or press the buttons manually. "Next Stop only" only announces the next stop without mentioning an exit side. Occasionally there is an additional announcement.
 ![enter image description here](https://cloud.furry.fm/index.php/apps/files_sharing/publicpreview/foi59jd93yBnbjs?file=&fileId=1093648&x=3844&y=1951&a=true)
 The program offers the possibility to adapt the text for the voice output. This currently requires 2 files:
@@ -36,7 +30,7 @@ The program offers the possibility to adapt the text for the voice output. This 
 
 ![enter image description here](https://cloud.furry.fm/index.php/apps/files_sharing/publicpreview/ZgD7mCs6mkfzaRA?file=&fileId=1093589&x=3844&y=1951&a=true)
 
-This file is used to convert the train category from the short code to the long version for the announcements. This is currently only used for the special announcement at the departure station.
+This file is used to convert the train category from the shortcode to the long version for the announcements. This is currently only used for the special announcement at the departure station.
 **config.cfg**
 
 ![enter image description here](https://cloud.furry.fm/index.php/apps/files_sharing/publicpreview/BDzFz79a8FCAN4q?file=&fileId=1093591&x=3844&y=1951&a=true)
