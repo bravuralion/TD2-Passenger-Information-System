@@ -48,7 +48,7 @@ temp_dir = tempfile.mkdtemp()
 
 global train_number_textbox, stations_listbox, language_combobox
 
-current_version = '2.0'
+current_version = '2.1'
 user = 'bravuralion'
 repo = 'TD2-Driver-PIS-SYSTEM'
 api_url = f"https://api.github.com/repos/{user}/{repo}/releases/latest"
@@ -222,7 +222,7 @@ def load_schedule(train_number_textbox, stations_listbox, blacklist_url, message
         selected_train_no = int(train_number)
         selected_train = next((train for train in trains_response if train['trainNo'] == selected_train_no), None)
         end_station = selected_train['timetable']['stopList'][-1]['stopNameRAW']
-        update_discord_status("Driver Mode", train_number, end_station)
+        #update_discord_status("Driver Mode", train_number, end_station)
         if not selected_train:
             messagebox.showinfo("Information", "Train number not found.")
             return
