@@ -8,6 +8,7 @@ import webbrowser
 import re
 import random
 import time
+import requests
 import threading
 import contextlib
 import tkinter as tk
@@ -48,7 +49,7 @@ temp_dir = tempfile.mkdtemp()
 
 global train_number_textbox, stations_listbox, language_combobox
 
-current_version = '2.1'
+current_version = '2.2'
 user = 'bravuralion'
 repo = 'TD2-Driver-PIS-SYSTEM'
 api_url = f"https://api.github.com/repos/{user}/{repo}/releases/latest"
@@ -497,45 +498,70 @@ def convert_time_for_audio(time_str):
     except ValueError:
         return time_str  # Bei Fehler, zurückgeben des Original-Strings
 
-def generate_announcements(selected_languages, categories_names, selected_train, start_station, end_station, arrival_time, departure_time, track_dropdown, delay_minutes, stop_details):
+def generate_announcements(config, selected_languages, categories_names, selected_train, start_station, end_station, arrival_time, departure_time, track_dropdown, delay_minutes, stop_details):
     announcements = {}
     for lang in selected_languages:
-        if lang == 'EN':
-            if delay_minutes > 5:
-                text = f"*STATION ANNOUNCEMENT* The {categories_names[selected_train['timetable']['category']]} from station {start_station} to station {end_station}, scheduled arrival {arrival_time.strftime('%H:%M')}, will arrive approximately {delay_minutes} minutes late at platform {track_dropdown.get()}. The delay is subject to change. Please pay attention to announcements."
-                audio = f"The {categories_names[selected_train['timetable']['category']]} from station {start_station} to station {end_station}, scheduled arrival {arrival_time.strftime('%H:%M')}, will arrive approximately {delay_minutes} minutes late at platform {track_dropdown.get()}. The delay is subject to change. Please pay attention to announcements."
-            elif stop_details.get('terminatesHere'):
-                text = f"*STATION ANNOUNCEMENT* Attention at track {track_dropdown.get()}, the {categories_names[selected_train['timetable']['category']]} from {start_station} is arriving. This train ends here, please do not board the train."
-                audio = f"Attention at track {track_dropdown.get()}, the {categories_names[selected_train['timetable']['category']]} from {start_station} is arriving. This train ends here, please do not board the train."
-            else:
-                text = f"*STATION ANNOUNCEMENT* Attention at track {track_dropdown.get()}, The {categories_names[selected_train['timetable']['category']]} from {start_station} to {end_station} is arriving. The planned Departure is {departure_time.strftime('%H:%M')}."
-                audio = f"Attention at track {track_dropdown.get()}, The {categories_names[selected_train['timetable']['category']]} from {start_station} to {end_station} is arriving. The planned Departure is {departure_time.strftime('%H:%M')}."
-            announcements['EN'] = {'text': text, 'audio': audio}
-        elif lang == 'DE':
-            if delay_minutes > 5:
-                arrival_time_str = convert_time_for_audio(arrival_time.strftime('%H:%M'))
-                text = f"*Bahnhofsdurchsage* Der {categories_names[selected_train['timetable']['category']]} von {start_station} nach {end_station}, geplante Ankunft {arrival_time.strftime('%H:%M')} , wird voraussichtlich mit einer Verspätung von {delay_minutes} Minuten auf Gleis {track_dropdown.get()} eintreffen. Bitte beachten Sie die Ansagen."
-                audio = f"Der {categories_names[selected_train['timetable']['category']]} von {start_station} nach {end_station}, geplante Ankunft {arrival_time_str}, wird voraussichtlich mit einer Verspätung von {delay_minutes} Minuten auf Gleis {track_dropdown.get()} eintreffen. Bitte beachten Sie die Ansagen."
-            elif stop_details.get('terminatesHere'):
-                text = f"*Bahnhofsdurchsage* Achtung am Gleis {track_dropdown.get()}, der {categories_names[selected_train['timetable']['category']]} von {start_station} fährt ein. Dieser Zug endet hier, bitte nicht einsteigen."
-                audio = f"Achtung am Gleis {track_dropdown.get()}, der {categories_names[selected_train['timetable']['category']]} von {start_station} fährt ein. Dieser Zug endet hier, bitte nicht einsteigen."
-            else:
-                departure_time_str = convert_time_for_audio(departure_time.strftime('%H:%M'))
-                text = f"*Bahnhofsdurchsage* Achtung am Gleis {track_dropdown.get()}, Der {categories_names[selected_train['timetable']['category']]} von {start_station} nach {end_station} fährt ein. Die planmässige Abfahrt ist um {departure_time.strftime('%H:%M')} ."
-                audio = f"Achtung am Gleis {track_dropdown.get()}, Der {categories_names[selected_train['timetable']['category']]} von {start_station} nach {end_station} fährt ein. Die planmässige Abfahrt ist um {departure_time_str} ."
-            announcements['DE'] = {'text': text, 'audio': audio}
-        elif lang == 'PL':
-            if delay_minutes > 5:
-                text = f"*OGŁOSZENIE STACYJNE* Uwaga! Pociąg {categories_names[selected_train['timetable']['category']]} ze stacji {start_station} do stacji {end_station}, planowy przyjazd {arrival_time.strftime('%H:%M')}, przyjedzie z opóźnieniem około {delay_minutes} minut na tor {track_dropdown.get()}. Opóźnienie może ulec zmianie. Prosimy o zwracanie uwagi na komunikaty."
-                audio = f"Uwaga! Pociąg {categories_names[selected_train['timetable']['category']]} ze stacji {start_station} do stacji {end_station}, planowy przyjazd {arrival_time.strftime('%H:%M')}, przyjedzie z opóźnieniem około {delay_minutes} minut na tor {track_dropdown.get()}. Opóźnienie może ulec zmianie. Prosimy o zwracanie uwagi na komunikaty."
-            elif stop_details.get('terminatesHere'):
-                text = f"*OGŁOSZENIE STACYJNE* Uwaga na tor numer {track_dropdown.get()}, przyjedzie Pociąg {categories_names[selected_train['timetable']['category']]} ze stacji {start_station}. Pociąg kończy bieg. Prosimy zachować ostrożność i nie zbliżać się do krawędzi peronu."
-                audio = f"Uwaga na tor numer {track_dropdown.get()}, przyjedzie Pociąg {categories_names[selected_train['timetable']['category']]} ze stacji {start_station}. Pociąg kończy bieg. Prosimy zachować ostrożność i nie zbliżać się do krawędzi peronu."
-            else:
-                text = f"*OGŁOSZENIE STACYJNE* Uwaga! Pociąg {categories_names[selected_train['timetable']['category']]} ze stacji {start_station} do stacji {end_station} wjedzie na tor numer {track_dropdown.get()}, Planowy odjazd pociągu o godzinie {departure_time.strftime('%H:%M')}."
-                audio = f"Uwaga! Pociąg {categories_names[selected_train['timetable']['category']]} ze stacji {start_station} do stacji {end_station} wjedzie na tor numer {track_dropdown.get()}, Planowy odjazd pociągu o godzinie {departure_time.strftime('%H:%M')}."
-            announcements['PL'] = {'text': text, 'audio': audio}
+        config_section = f"Dispatcher_{lang}"
+        category_name = categories_names[selected_train['timetable']['category']]
+        platform = track_dropdown.get()
+        arrival_time_str = arrival_time.strftime('%H:%M')
+        departure_time_str = departure_time.strftime('%H:%M')
+        
+        # Definieren Sie die Variablen für alle Sprachen
+        arrival_time_audio = convert_time_for_audio(arrival_time.strftime('%H:%M')) if lang == 'DE' else arrival_time_str
+        departure_time_audio = convert_time_for_audio(departure_time.strftime('%H:%M')) if lang == 'DE' else departure_time_str
+
+
+        if lang == 'DE':
+            arrival_time_audio = convert_time_for_audio(arrival_time.strftime('%H:%M'))
+            departure_time_audio = convert_time_for_audio(departure_time.strftime('%H:%M'))
+
+        if delay_minutes > 5:
+            text = config[config_section]['clipboard_delayed'].format(
+                train_category=category_name,
+                start_station=start_station,
+                end_station=end_station,
+                arrival_time=arrival_time_str,
+                delay_minutes=delay_minutes,
+                platform=platform
+            )
+            audio = config[config_section]['audio_delayed'].format(
+                train_category=category_name,
+                start_station=start_station,
+                end_station=end_station,
+                arrival_time=(arrival_time_audio if lang == 'DE' else arrival_time_str),
+                delay_minutes=delay_minutes,
+                platform=platform
+            )
+        elif stop_details.get('terminatesHere'):
+            text = config[config_section]['clipboard_terminates'].format(
+                train_category=category_name,
+                start_station=start_station,
+                platform=platform
+            )
+            audio = config[config_section]['audio_terminates'].format(
+                train_category=category_name,
+                start_station=start_station,
+                platform=platform
+            )
+        else:
+            text = config[config_section]['clipboard_arriving'].format(
+                train_category=category_name,
+                start_station=start_station,
+                end_station=end_station,
+                departure_time=departure_time_str,
+                platform=platform
+            )
+            audio = config[config_section]['audio_arriving'].format(
+                train_category=category_name,
+                start_station=start_station,
+                end_station=end_station,
+                departure_time=(departure_time_audio if lang == 'DE' else departure_time_str),
+                platform=platform
+            )
+        announcements[lang] = {'text': text, 'audio': audio}
     return announcements
+
 
 def generate_button_click(station_dropdown, train_dropdown, track_dropdown, categories_names, log_console, language_combobox,audio_checkbox_var):
     selected_train_no = train_dropdown.get().strip()
@@ -547,15 +573,17 @@ def generate_button_click(station_dropdown, train_dropdown, track_dropdown, cate
     selected_track = track_dropdown.get()
     stop_list = selected_train['timetable']['stopList']
     if selected_station_name and selected_train_no and selected_track:
-        stop_details = next((stop for stop in stop_list if selected_station_name in stop['stopNameRAW'] and stop.get('mainStop')), None)
+        selected_station_name_lower = selected_station_name.lower()
+        stop_details = next((stop for stop in stop_list if selected_station_name_lower in stop['stopNameRAW'].lower() and stop.get('mainStop')), None)
 
         if not stop_details:
-            main_station_name = selected_station_name.split(' ')[0]
-            stop_details = next((stop for stop in stop_list if main_station_name in stop['stopNameRAW'] and stop.get('mainStop')), None)
+            main_station_name_lower = selected_station_name.split(' ')[0].lower()
+            stop_details = next((stop for stop in stop_list if main_station_name_lower in stop['stopNameRAW'].lower() and stop.get('mainStop')), None)
 
         if not stop_details:
-            main_station_name = selected_station_name.split(' ')[-1]
-            stop_details = next((stop for stop in stop_list if main_station_name in stop['stopNameRAW'] and stop.get('mainStop')), None)
+            main_station_name_lower = selected_station_name.split(' ')[-1].lower()
+            stop_details = next((stop for stop in stop_list if main_station_name_lower in stop['stopNameRAW'].lower() and stop.get('mainStop')), None)
+
         
         print("stop_details:")
         print(stop_details)
@@ -573,11 +601,13 @@ def generate_button_click(station_dropdown, train_dropdown, track_dropdown, cate
             selected_language = language_combobox.get() 
             selected_languages = [selected_language]
 
-            announcements = generate_announcements(selected_languages, categories_names, selected_train, start_station, end_station, arrival_time, departure_time, track_dropdown, delay_minutes, stop_details)
+            announcements = generate_announcements(config,selected_languages, categories_names, selected_train, start_station, end_station, arrival_time, departure_time, track_dropdown, delay_minutes, stop_details)
 
             for lang in announcements:
                 pyperclip.copy(announcements[lang]['text'])                
-                start_convert_text_to_speech_thread(announcements[lang]['audio'], lang)
+                if audio_checkbox_var.get() == 1:              
+                    start_convert_text_to_speech_thread(announcements[lang]['audio'], lang)
+            
                 messagebox.showinfo("Announcement", f"The following text has been copied to your clipboard:\n\n{announcements[lang]['text']}")
 
         else:

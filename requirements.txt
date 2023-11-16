@@ -1,0 +1,10 @@
+clipboard
+requests
+pygame
+Pillow
+pypresence
+playsound
+configparser
+unidecode
+pyperclip
+global-hotkeys
