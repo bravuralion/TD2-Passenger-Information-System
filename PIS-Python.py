@@ -57,7 +57,8 @@ api_url = f"https://api.github.com/repos/{user}/{repo}/releases/latest"
 voices = {
     'EN': ('en-US-JessaNeural', 'en-US'),
     'PL': ('pl-PL-AgnieszkaNeural', 'pl-PL'),
-    'DE': ('de-DE-KatjaNeural', 'de-DE')
+    'DE': ('de-DE-KatjaNeural', 'de-DE'),
+    'PT': ('pt-PT-RaquelNeural', 'pt-PT')
 }
 
 def connect_discord():
@@ -366,11 +367,11 @@ def create_driver_window():
             driver_w.destroy()
         if 'dispatcher_w' in globals():
             dispatcher_w.destroy()
-        close_discord()
+        #close_discord()
         pygame.quit()
         os._exit(0)
-    connect_discord()  # Verbinden mit Discord beim Starten des Fahrermodus
-    update_discord_status("Driver Mode")
+    #connect_discord()  # Verbinden mit Discord beim Starten des Fahrermodus
+    #update_discord_status("Driver Mode")
     driver_w = tk.Toplevel()
     driver_w.title('On-board Passenger Information System')
     driver_w.geometry('480x430')
@@ -415,7 +416,7 @@ def create_driver_window():
 
     language_combobox = tk.StringVar(driver_w)
     language_combobox.set('DE')
-    language_options = ['DE', 'EN', 'PL']
+    language_options = ['DE', 'EN', 'PL', 'PT']
 
     language_dropdown = tk.OptionMenu(driver_w, language_combobox, *language_options)
     language_dropdown.place(x=10, y=330, width=460, height=20)
