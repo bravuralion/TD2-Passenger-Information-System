@@ -31,7 +31,6 @@ from pypresence import Presence
 def clean_string(s):
     return unidecode.unidecode(s)
 
-api_key = ''
 resource_region = 'westeurope'
 tts_url = f'https://{resource_region}.tts.speech.microsoft.com/cognitiveservices/v1'
 blacklist_url = "https://cloud.furry.fm/index.php/s/XBoYMxZXsmweK8D/download/TD2-PIS.txt"
@@ -41,7 +40,20 @@ categories_config_path = 'config/categories.cfg'
 categories_names = {}
 wav_output_path = f"{getenv('APPDATA')}\\TD2-AN.wav"
 gong_sound_path = None
-CLIENT_ID = ''  
+
+keys = {}
+with open('keys.txt', 'r') as file:
+    for line in file:
+        if line.strip():
+            key, value = line.split('=', 1)
+            keys[key.strip()] = value.strip()
+
+api_key = keys.get('api_key', '')
+CLIENT_ID = keys.get('CLIENT_ID', '')
+blacklist_url = keys.get('blacklist_url', '')
+
+api_key = keys.get('api_key', '')
+CLIENT_ID = keys.get('CLIENT_ID', '')
 discord_rpc = Presence(CLIENT_ID)
 
 pygame.mixer.init()
