@@ -1,30 +1,16 @@
 # -*- coding: utf-8 -*-
-import clipboard
-import os
-import shutil
-import tempfile
-import requests
-import webbrowser
-import re
-import random
-import time
-import requests
-import threading
-import contextlib
+import clipboard, os, shutil, tempfile
+import requests, webbrowser, re, random
+import time, requests, threading, contextlib
 import tkinter as tk
+import wave, pygame, configparser, datetime
+import unidecode, pyperclip, zipfile
 from tkinter import messagebox, filedialog, ttk
-import wave
-import pygame
 from playsound import playsound
-import configparser
 from os import getenv
 from global_hotkeys import *
 from PIL import Image, ImageTk
-import datetime
 from tkinter import END
-import unidecode
-import pyperclip
-import zipfile
 from io import BytesIO
 from pypresence import Presence
 
