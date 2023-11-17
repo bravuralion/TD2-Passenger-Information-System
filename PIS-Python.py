@@ -42,11 +42,17 @@ wav_output_path = f"{getenv('APPDATA')}\\TD2-AN.wav"
 gong_sound_path = None
 
 language_names = {
-    'DE': 'Deutsch',
+    'DE': 'German',
     'EN': 'English',
     'PL': 'Polish',
-    'PT': 'Portuguese'
+    'PT': 'Portuguese',
+    'RU': 'Russian'
 }
+"""
+CLIENT_ID = ''
+api_key = ''
+blacklist_url = ""
+"""
 
 keys = {}
 with open('keys.txt', 'r') as file:
@@ -54,7 +60,6 @@ with open('keys.txt', 'r') as file:
         if line.strip():
             key, value = line.split('=', 1)
             keys[key.strip()] = value.strip()
-
 api_key = keys.get('api_key', '')
 CLIENT_ID = keys.get('CLIENT_ID', '')
 blacklist_url = keys.get('blacklist_url', '')
@@ -68,18 +73,10 @@ temp_dir = tempfile.mkdtemp()
 
 global train_number_textbox, stations_listbox, language_combobox
 
-current_version = '2.2'
+current_version = '2.3'
 user = 'bravuralion'
 repo = 'TD2-Driver-PIS-SYSTEM'
 api_url = f"https://api.github.com/repos/{user}/{repo}/releases/latest"
-
-# Azure Voice Presets
-voices = {
-    'EN': ('en-US-JessaNeural', 'en-US'),
-    'PL': ('pl-PL-AgnieszkaNeural', 'pl-PL'),
-    'DE': ('de-DE-KatjaNeural', 'de-DE'),
-    'PT': ('pt-PT-RaquelNeural', 'pt-PT')
-}
 
 def connect_discord():
     discord_rpc.connect()
@@ -115,6 +112,19 @@ def register_hotkeys(exit_left_func, exit_right_func, next_stop_only_func):
         except KeyError as e:
             messagebox.showerror("Hotkey Error", f"Ein Fehler ist aufgetreten: {e}. Überprüfen Sie, ob der korrekte Schlüssel in der Konfigurationsdatei vorhanden ist.")
     start_checking_hotkeys()
+
+voices = {
+    'EN': [('en-US-JessaNeural', 'en-US'), ('en-US-GuyNeural', 'en-US'), ('en-US-AriaNeural', 'en-US'), ('en-US-DavisNeural', 'en-US')],
+    'PL': [('pl-PL-ZofiaNeural', 'pl-PL'), ('pl-PL-MarekNeural', 'pl-PL'),('pl-PL-ZofiaNeural', 'pl-PL')],
+    'DE': [('de-DE-KatjaNeural', 'de-DE'), ('de-DE-ConradNeural', 'de-DE'), ('de-DE-AmalaNeural', 'de-DE'), ('de-DE-BerndNeural', 'de-DE')],
+    'RU': [('ru-RU-SvetlanaNeural', 'ru-RU'), ('ru-RU-DmitryNeural', 'ru-RU'), ('ru-RU-DariyaNeural', 'ru-RU')]
+}
+#for later:     'PT': [('pt-PT-RaquelNeural', 'pt-PT'), ('pt-PT-DuarteNeural', 'pt-PT'), ('pt-PT-FernandaNeural', 'pt-PT')]
+
+selected_voices = {'EN': 'en-US-JessaNeural', 'PL': 'pl-PL-ZofiaNeural', 'DE': 'de-DE-KatjaNeural', 'PT': 'pt-PT-RaquelNeural','RU': 'ru-RU-SvetlanaNeural'}
+
+def set_voice(language, voice):
+    selected_voices[language] = voice
 
 def create_start_window():
     global start_window
@@ -345,7 +355,8 @@ def convert_text_to_speech(text, language):
     if gong_sound_path:
         play_sound(gong_sound_path)
     
-    voice_name, lang = voices[language]
+    voice_name = selected_voices[language]
+    lang = voices[language][0][1]  # Sprachcode bleibt gleich
     print(text)
     headers = {
         "Ocp-Apim-Subscription-Key": api_key,
@@ -396,6 +407,20 @@ def create_driver_window():
     driver_w = tk.Toplevel()
     driver_w.title('On-board Passenger Information System')
     driver_w.geometry('480x430')
+    # Erstellen der Menüleiste
+    menubar = tk.Menu(driver_w)
+    driver_w.config(menu=menubar)
+
+    # Erstellen des Sprachauswahlmenüs
+    voice_menu = tk.Menu(menubar, tearoff=0)
+    menubar.add_cascade(label="Speech Voices", menu=voice_menu)
+
+    # Hinzufügen von Sprachoptionen für jede verfügbare Stimme
+    for lang, voice_options in voices.items():
+        lang_menu = tk.Menu(voice_menu, tearoff=0)
+        voice_menu.add_cascade(label=lang, menu=lang_menu)
+        for voice_name, _ in voice_options:
+            lang_menu.add_command(label=voice_name, command=lambda v=voice_name, l=lang: set_voice(l, v))
 
     train_number_textbox = tk.Entry(driver_w)
     train_number_textbox.place(x=10, y=10, width=460, height=20)
@@ -436,8 +461,8 @@ def create_driver_window():
     donate_button.place(x=350, y=405, width=75, height=20)
 
     language_combobox = tk.StringVar(driver_w)
-    language_combobox.set('Deutsch')
-    language_options = [language_names[lang] for lang in ['DE', 'EN', 'PL', 'PT']]
+    language_combobox.set('German')
+    language_options = [language_names[lang] for lang in ['DE', 'EN', 'PL', 'PT', 'RU']]
 
 
     language_dropdown = tk.OptionMenu(driver_w, language_combobox, *language_options)
@@ -489,7 +514,8 @@ def DP_generate_passing(track, gong_sound_path, audio_checkbox_var, language_com
     announcements = {
         "EN": f"*STATION ANNOUNCEMENT* Attention at track {track}, A train is passing through. Please stand back.",
         "PL": f"*OGŁOSZENIE STACYJNE* Uwaga! Na tor numer {track} wjedzie pociąg bez zatrzymania. Prosimy zachować ostrożność i nie zbliżać się do krawędzi peronu.",
-        "DE": f"*Bahnhofsdurchsage* Achtung am Gleis {track}, Zugdurchfahrt. Zurückbleiben bitte."
+        "DE": f"*Bahnhofsdurchsage* Achtung am Gleis {track}, Zugdurchfahrt. Zurückbleiben bitte.",
+        "RU": f"*ОБЪЯВЛЕНИЕ СТАНЦИИ* Внимание! Поезд по пути {track} проследует без остановки. Держитесь от края платформы"
     }
 
     selected_language = language_combobox.get()
@@ -636,6 +662,7 @@ def generate_button_click(station_dropdown, train_dropdown, track_dropdown, cate
             DP_generate_passing(selected_track,gong_sound_path,audio_checkbox_var,language_combobox,log_console)
 
 def create_dispatcher_window():
+    
     def on_closing():
         try:
             shutil.rmtree(temp_dir)
@@ -654,6 +681,20 @@ def create_dispatcher_window():
     dispatcher_w.title("TD2 Station Announcement Tool")
     dispatcher_w.geometry("570x257")
     dispatcher_w.resizable(False, False)
+    # Erstellen der Menüleiste
+    menubar = tk.Menu(dispatcher_w)
+    dispatcher_w.config(menu=menubar)
+
+    # Erstellen des Sprachauswahlmenüs
+    voice_menu = tk.Menu(menubar, tearoff=0)
+    menubar.add_cascade(label="Speech Voices", menu=voice_menu)
+
+    # Hinzufügen von Sprachoptionen für jede verfügbare Stimme
+    for lang, voice_options in voices.items():
+        lang_menu = tk.Menu(voice_menu, tearoff=0)
+        voice_menu.add_cascade(label=lang, menu=lang_menu)
+        for voice_name, _ in voice_options:
+            lang_menu.add_command(label=voice_name, command=lambda v=voice_name, l=lang: set_voice(l, v))
 
     settings_group = tk.LabelFrame(dispatcher_w, text="Settings", width=177, height=121)
     settings_group.place(x=381, y=10)
@@ -688,7 +729,7 @@ def create_dispatcher_window():
 
     language_combobox_var = tk.StringVar()
     language_combobox = ttk.Combobox(dispatcher_w, textvariable=language_combobox_var, state='readonly')
-    language_combobox['values'] = ['EN', 'PL', 'DE']
+    language_combobox['values'] = ['EN', 'PL', 'DE', 'RU']
     language_combobox.set('EN')  # Standardwert setzen
     language_combobox.place(x=192, y=29, width=147, height=23)
 
