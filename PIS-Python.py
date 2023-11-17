@@ -26,7 +26,10 @@ categories_config_path = 'config/categories.cfg'
 categories_names = {}
 wav_output_path = f"{getenv('APPDATA')}\\TD2-AN.wav"
 gong_sound_path = None
-
+current_version = '2.3'
+user = 'bravuralion'
+repo = 'TD2-Driver-PIS-SYSTEM'
+api_url = f"https://api.github.com/repos/{user}/{repo}/releases/latest"
 language_names = {
     'DE': 'German',
     'EN': 'English',
@@ -34,6 +37,7 @@ language_names = {
     'PT': 'Portuguese',
     'RU': 'Russian'
 }
+global train_number_textbox, stations_listbox, language_combobox
 """
 CLIENT_ID = ''
 api_key = ''
@@ -50,19 +54,8 @@ api_key = keys.get('api_key', '')
 CLIENT_ID = keys.get('CLIENT_ID', '')
 blacklist_url = keys.get('blacklist_url', '')
 
-api_key = keys.get('api_key', '')
-CLIENT_ID = keys.get('CLIENT_ID', '')
-discord_rpc = Presence(CLIENT_ID)
-
 pygame.mixer.init()
 temp_dir = tempfile.mkdtemp()
-
-global train_number_textbox, stations_listbox, language_combobox
-
-current_version = '2.3'
-user = 'bravuralion'
-repo = 'TD2-Driver-PIS-SYSTEM'
-api_url = f"https://api.github.com/repos/{user}/{repo}/releases/latest"
 
 def connect_discord():
     discord_rpc.connect()
@@ -342,7 +335,7 @@ def convert_text_to_speech(text, language):
         play_sound(gong_sound_path)
     
     voice_name = selected_voices[language]
-    lang = voices[language][0][1]  # Sprachcode bleibt gleich
+    lang = voices[language][0][1] 
     print(text)
     headers = {
         "Ocp-Apim-Subscription-Key": api_key,
@@ -393,15 +386,13 @@ def create_driver_window():
     driver_w = tk.Toplevel()
     driver_w.title('On-board Passenger Information System')
     driver_w.geometry('480x430')
-    # Erstellen der Menüleiste
     menubar = tk.Menu(driver_w)
     driver_w.config(menu=menubar)
 
-    # Erstellen des Sprachauswahlmenüs
     voice_menu = tk.Menu(menubar, tearoff=0)
     menubar.add_cascade(label="Speech Voices", menu=voice_menu)
 
-    # Hinzufügen von Sprachoptionen für jede verfügbare Stimme
+ 
     for lang, voice_options in voices.items():
         lang_menu = tk.Menu(voice_menu, tearoff=0)
         voice_menu.add_cascade(label=lang, menu=lang_menu)
@@ -529,7 +520,7 @@ def convert_time_for_audio(time_str):
         time_obj = datetime.datetime.strptime(time_str, '%H:%M')
         return time_obj.strftime('%H Uhr %M')  # z.B. "15:30" zu "15 Uhr 30"
     except ValueError:
-        return time_str  # Bei Fehler, zurückgeben des Original-Strings
+        return time_str 
 
 def generate_announcements(config, selected_languages, categories_names, selected_train, start_station, end_station, arrival_time, departure_time, track_dropdown, delay_minutes, stop_details):
     announcements = {}
@@ -540,10 +531,8 @@ def generate_announcements(config, selected_languages, categories_names, selecte
         arrival_time_str = arrival_time.strftime('%H:%M')
         departure_time_str = departure_time.strftime('%H:%M')
         
-        # Definieren Sie die Variablen für alle Sprachen
         arrival_time_audio = convert_time_for_audio(arrival_time.strftime('%H:%M')) if lang == 'DE' else arrival_time_str
         departure_time_audio = convert_time_for_audio(departure_time.strftime('%H:%M')) if lang == 'DE' else departure_time_str
-
 
         if lang == 'DE':
             arrival_time_audio = convert_time_for_audio(arrival_time.strftime('%H:%M'))
