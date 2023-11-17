@@ -41,6 +41,13 @@ categories_names = {}
 wav_output_path = f"{getenv('APPDATA')}\\TD2-AN.wav"
 gong_sound_path = None
 
+language_names = {
+    'DE': 'Deutsch',
+    'EN': 'English',
+    'PL': 'Polish',
+    'PT': 'Portuguese'
+}
+
 keys = {}
 with open('keys.txt', 'r') as file:
     for line in file:
@@ -258,8 +265,8 @@ def load_schedule(train_number_textbox, stations_listbox, blacklist_url, message
 
 
 def announce_exit(exit_side,language_combobox,train_number_textbox,stations_listbox):
-    selected_language = language_combobox.get()
-    language_key = selected_language[:2].upper()
+    selected_language_full = language_combobox.get()
+    selected_language_code = next(code for code, name in language_names.items() if name == selected_language_full)
     selected_train_no = train_number_textbox.get()
     
     try:
@@ -288,29 +295,29 @@ def announce_exit(exit_side,language_combobox,train_number_textbox,stations_list
         final_announcement = ""
 
         if is_first_station:
-            base_announcement = config['Start_Station'][f'01_{language_key}'] + " " + \
+            base_announcement = config['Start_Station'][f'01_{selected_language_code}'] + " " + \
                                 category_name + " " + \
-                                config['Start_Station'][f'02_{language_key}'] + " " + \
+                                config['Start_Station'][f'02_{selected_language_code}'] + " " + \
                                 last_station_name + \
-                                config['Start_Station'][f'03_{language_key}']
+                                config['Start_Station'][f'03_{selected_language_code}']
         else:
-            base_announcement = config['next_station'][language_key] + " " + station_name
+            base_announcement = config['next_station'][selected_language_code] + " " + station_name
         
         if exit_side == "left" and not is_first_station:
-            exit_announcement = config['exit_left'][language_key]
+            exit_announcement = config['exit_left'][selected_language_code]
         elif exit_side == "right" and not is_first_station:
-            exit_announcement = config['exit_right'][language_key]
+            exit_announcement = config['exit_right'][selected_language_code]
 
         if not is_last_station and not is_first_station and random.randint(1, 6) <= 2:
-            additional_announcement = config['additional_Announcement'][language_key]
+            additional_announcement = config['additional_Announcement'][selected_language_code]
 
         final_announcement = f"{base_announcement} {exit_announcement} {additional_announcement}".strip()
         
         if is_last_station:
-            final_announcement += config['last_station_final_stop'][language_key]
+            final_announcement += config['last_station_final_stop'][selected_language_code]
 
         print(final_announcement)  #Debugging
-        start_convert_text_to_speech_thread(final_announcement, selected_language)
+        start_convert_text_to_speech_thread(final_announcement, selected_language_code)
 
         if not is_last_station:
             stations_listbox.select_clear(current_index)
@@ -320,11 +327,12 @@ def announce_exit(exit_side,language_combobox,train_number_textbox,stations_list
         messagebox.showerror("Error", f"An error occurred: {e}")
 
 def play_special_announcement(announcement_number,language_combobox):
+    selected_language_full = language_combobox.get()
+    selected_language_code = next(code for code, name in language_names.items() if name == selected_language_full)
     try:
         special_announcement_key = str(announcement_number)
         announcement_text = config['Special'][special_announcement_key]
-        selected_language = language_combobox.get()
-        start_convert_text_to_speech_thread(announcement_text, selected_language)
+        start_convert_text_to_speech_thread(announcement_text, selected_language_code)
     except KeyError as e:
         messagebox.showerror("Fehler", f"An error has occurred: {e}. Check whether the correct key is present in the configuration file.")
 
@@ -428,8 +436,9 @@ def create_driver_window():
     donate_button.place(x=350, y=405, width=75, height=20)
 
     language_combobox = tk.StringVar(driver_w)
-    language_combobox.set('DE')
-    language_options = ['DE', 'EN', 'PL', 'PT']
+    language_combobox.set('Deutsch')
+    language_options = [language_names[lang] for lang in ['DE', 'EN', 'PL', 'PT']]
+
 
     language_dropdown = tk.OptionMenu(driver_w, language_combobox, *language_options)
     language_dropdown.place(x=10, y=330, width=460, height=20)
