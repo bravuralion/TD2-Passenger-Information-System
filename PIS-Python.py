@@ -14,11 +14,7 @@ from tkinter import END
 from io import BytesIO
 from pypresence import Presence
 
-def clean_string(s):
-    return unidecode.unidecode(s)
-
-resource_region = 'westeurope'
-tts_url = f'https://{resource_region}.tts.speech.microsoft.com/cognitiveservices/v1'
+tts_url = f'https://westeurope.tts.speech.microsoft.com/cognitiveservices/v1'
 blacklist_url = "https://cloud.furry.fm/index.php/s/XBoYMxZXsmweK8D/download/TD2-PIS.txt"
 config_file_path = 'config/config.cfg'
 config = configparser.ConfigParser()
@@ -27,9 +23,8 @@ categories_names = {}
 wav_output_path = f"{getenv('APPDATA')}\\TD2-AN.wav"
 gong_sound_path = None
 current_version = '2.3'
-user = 'bravuralion'
-repo = 'TD2-Driver-PIS-SYSTEM'
-api_url = f"https://api.github.com/repos/{user}/{repo}/releases/latest"
+api_url = f"https://api.github.com/repos/bravuralion/TD2-Driver-PIS-SYSTEM/releases/latest"
+
 language_names = {
     'DE': 'German',
     'EN': 'English',
@@ -37,11 +32,18 @@ language_names = {
     'PT': 'Portuguese',
     'RU': 'Russian'
 }
+voices = {
+    'EN': [('en-US-JessaNeural', 'en-US'), ('en-US-GuyNeural', 'en-US'), ('en-US-AriaNeural', 'en-US'), ('en-US-DavisNeural', 'en-US')],
+    'PL': [('pl-PL-ZofiaNeural', 'pl-PL'), ('pl-PL-MarekNeural', 'pl-PL'),('pl-PL-ZofiaNeural', 'pl-PL')],
+    'DE': [('de-DE-KatjaNeural', 'de-DE'), ('de-DE-ConradNeural', 'de-DE'), ('de-DE-AmalaNeural', 'de-DE'), ('de-DE-BerndNeural', 'de-DE')],
+    'RU': [('ru-RU-SvetlanaNeural', 'ru-RU'), ('ru-RU-DmitryNeural', 'ru-RU'), ('ru-RU-DariyaNeural', 'ru-RU')]
+}
+#for later:     'PT': [('pt-PT-RaquelNeural', 'pt-PT'), ('pt-PT-DuarteNeural', 'pt-PT'), ('pt-PT-FernandaNeural', 'pt-PT')]
+selected_voices = {'EN': 'en-US-JessaNeural', 'PL': 'pl-PL-ZofiaNeural', 'DE': 'de-DE-KatjaNeural', 'PT': 'pt-PT-RaquelNeural','RU': 'ru-RU-SvetlanaNeural'}
 global train_number_textbox, stations_listbox, language_combobox
 """
 CLIENT_ID = ''
 api_key = ''
-blacklist_url = ""
 """
 
 keys = {}
@@ -52,10 +54,8 @@ with open('keys.txt', 'r') as file:
             keys[key.strip()] = value.strip()
 api_key = keys.get('api_key', '')
 CLIENT_ID = keys.get('CLIENT_ID', '')
-blacklist_url = keys.get('blacklist_url', '')
-
 pygame.mixer.init()
-temp_dir = tempfile.mkdtemp()
+
 
 def connect_discord():
     discord_rpc.connect()
@@ -92,15 +92,7 @@ def register_hotkeys(exit_left_func, exit_right_func, next_stop_only_func):
             messagebox.showerror("Hotkey Error", f"Ein Fehler ist aufgetreten: {e}. Überprüfen Sie, ob der korrekte Schlüssel in der Konfigurationsdatei vorhanden ist.")
     start_checking_hotkeys()
 
-voices = {
-    'EN': [('en-US-JessaNeural', 'en-US'), ('en-US-GuyNeural', 'en-US'), ('en-US-AriaNeural', 'en-US'), ('en-US-DavisNeural', 'en-US')],
-    'PL': [('pl-PL-ZofiaNeural', 'pl-PL'), ('pl-PL-MarekNeural', 'pl-PL'),('pl-PL-ZofiaNeural', 'pl-PL')],
-    'DE': [('de-DE-KatjaNeural', 'de-DE'), ('de-DE-ConradNeural', 'de-DE'), ('de-DE-AmalaNeural', 'de-DE'), ('de-DE-BerndNeural', 'de-DE')],
-    'RU': [('ru-RU-SvetlanaNeural', 'ru-RU'), ('ru-RU-DmitryNeural', 'ru-RU'), ('ru-RU-DariyaNeural', 'ru-RU')]
-}
-#for later:     'PT': [('pt-PT-RaquelNeural', 'pt-PT'), ('pt-PT-DuarteNeural', 'pt-PT'), ('pt-PT-FernandaNeural', 'pt-PT')]
 
-selected_voices = {'EN': 'en-US-JessaNeural', 'PL': 'pl-PL-ZofiaNeural', 'DE': 'de-DE-KatjaNeural', 'PT': 'pt-PT-RaquelNeural','RU': 'ru-RU-SvetlanaNeural'}
 
 def set_voice(language, voice):
     selected_voices[language] = voice
@@ -202,13 +194,6 @@ def load_config():
     else:
         config.read(config_file_path, encoding='utf-8')
 load_config()
-
-def get_wav_duration(wav_path):
-    with contextlib.closing(wave.open(wav_path, 'r')) as file:
-        frames = file.getnframes()
-        rate = file.getframerate()
-        duration_seconds = frames / float(rate)
-        return duration_seconds
     
 def select_gong():
     global gong_sound_path
@@ -353,6 +338,7 @@ def convert_text_to_speech(text, language):
     
     response = requests.post(tts_url, headers=headers, data=body.encode('utf-8'))
     if response.status_code == 200:
+        temp_dir = tempfile.mkdtemp()
         with tempfile.NamedTemporaryFile(delete=False, suffix='.wav', dir=temp_dir) as audio_file:
             temp_path = audio_file.name
             audio_file.write(response.content)
