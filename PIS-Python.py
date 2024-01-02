@@ -26,7 +26,7 @@ categories_config_path = 'config/categories.cfg'
 categories_names = {}
 wav_output_path = f"{getenv('APPDATA')}\\TD2-AN.wav"
 gong_sound_path = None
-current_version = '2.3'
+current_version = '2.4'
 user = 'bravuralion'
 repo = 'TD2-Driver-PIS-SYSTEM'
 api_url = f"https://api.github.com/repos/{user}/{repo}/releases/latest"
@@ -138,7 +138,7 @@ def create_start_window():
     start_window.mainloop()
 
 def get_station_names():
-    response = requests.get("https://stacjownik.spythere.pl/api/getSceneries")
+    response = requests.get("https://stacjownik.spythere.eu/api/getSceneries")
     if response.status_code == 200:
         station_data = response.json()
         station_names = [station['name'] for station in station_data]
@@ -219,7 +219,7 @@ def select_gong():
 
 def load_schedule(train_number_textbox, stations_listbox, blacklist_url, messagebox):
     try:
-        response = requests.get("https://stacjownik.spythere.pl/api/getActiveTrainList")
+        response = requests.get("https://stacjownik.spythere.eu/api/getActiveTrainList")
         response.raise_for_status()
         trains_response = response.json()
         
@@ -259,7 +259,7 @@ def announce_exit(exit_side,language_combobox,train_number_textbox,stations_list
     selected_train_no = train_number_textbox.get()
     
     try:
-        response = requests.get("https://stacjownik.spythere.pl/api/getActiveTrainList")
+        response = requests.get("https://stacjownik.spythere.eu/api/getActiveTrainList")
         response.raise_for_status()
         trains_response = response.json()
         
@@ -476,7 +476,7 @@ def DP_update_button_click(station_dropdown, train_dropdown, log_console):
     selected_station_name = station_dropdown.get()
     if selected_station_name:
         try:
-            trains_response = requests.get("https://stacjownik.spythere.pl/api/getActiveTrainList").json()
+            trains_response = requests.get("https://stacjownik.spythere.eu/api/getActiveTrainList").json()
             relevant_trains = [train for train in trains_response if train['currentStationName'] == selected_station_name]
             train_numbers = [train['trainNo'] for train in relevant_trains]
             
@@ -589,7 +589,7 @@ def generate_button_click(station_dropdown, train_dropdown, track_dropdown, cate
     selected_train_no = train_dropdown.get().strip()
     selected_train_no = int(selected_train_no)
 
-    trains_response = requests.get("https://stacjownik.spythere.pl/api/getActiveTrainList").json()
+    trains_response = requests.get("https://stacjownik.spythere.eu/api/getActiveTrainList").json()
     selected_train = next((train for train in trains_response if train['trainNo'] == selected_train_no), None)
     selected_station_name = station_dropdown.get()
     selected_track = track_dropdown.get()
@@ -732,7 +732,7 @@ def create_dispatcher_window():
     
     for i in range(1, 601):
         trackDropdown['values'] = (*trackDropdown['values'], str(i))
-    response = requests.get("https://stacjownik.spythere.pl/api/getSceneries")
+    response = requests.get("https://stacjownik.spythere.eu/api/getSceneries")
     if response.status_code == 200:  
         stationNames = [scenery['name'] for scenery in response.json()]  
         stationNames.sort()
